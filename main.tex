@@ -1,0 +1,59 @@
+\documentclass{report}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{anyfontsize}
+\usepackage{graphicx}
+\usepackage{subfiles}
+\usepackage[top=3cm,bottom=3cm,left=3cm,right=3cm,twoside]{geometry}
+\usepackage{parskip}
+\usepackage{amssymb}
+\usepackage{tikz}
+
+
+\usepackage{blindtext} % per testing
+
+\begin{document}
+
+% ------ frontespizio ------
+\subfile{frontespizio}
+% --------------------------
+~
+\clearpage % pagina vuota intenzionale
+
+
+\fontsize{13}{15}\selectfont
+
+\tableofcontents
+\pagestyle{plain} %o fancy, se userete fancyhdr (consigliato)
+
+
+% ------ Introduzione ------
+\subfile{0_introduzione}
+% --------------------------
+
+% ------ Prerequisiti ------
+\subfile{1_prerequisiti}
+% --------------------------
+
+% ------ Binding-Fragments ------
+\subfile{2_binding_fragments}
+% --------------------------
+
+% ------ Vampire ------
+\subfile{3_vampire}
+% --------------------------
+
+% ------ Progettazione ------
+\subfile{4_progettazione}
+% --------------------------
+
+% ------ Implementazione ------
+\subfile{5_implementazione}
+% --------------------------
+
+% ------ Sperimentazione ------
+\subfile{6_sperimentazione}
+% --------------------------
+
+
+\end{document}

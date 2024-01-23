@@ -1,0 +1,110 @@
+\documentclass[./main.tex]{subfiles}
+
+
+\begin{document}
+\chapter{Prerequisiti}
+
+In questo capitolo verranno descritte le nozioni di base necessarie 
+per comprendere il lavoro svolto. 
+In particolare, verranno introdotti i concetti di logica proposizionale e 
+del primo ordine, definita come estensione della prima. Nell'ultimo paragrafo del capitolo 
+verrà descritto in che modo le formule di logica del 
+primo ordine possono essere rappresentate in un formato di file, per poi essere 
+processate come input da un theorem prover. 
+Lo scopo di questo capitolo è quello di accennare la teoria logica utilizzata nell'implementazione di vampire 
+e della procedura di decisione per i Binding-Fragments. Perciò, verranno date per scontate nozioni di teoria degli insiemi,
+algebra booleana e teoria dei linguaggi formali.
+
+
+
+\section{Logica Proposizionale}
+
+% ---------------------- FORMULE ----------------------
+\subsection{Formule}
+Sia $\Sigma_c = \{c_1, c_2, ...\}$ un insieme di simboli di costante, 
+$\Sigma = \{ \land, \lor, \lnot, (, ), \top, \bot\} \cup \Sigma_c$ è detto alfabeto della logica proposizionale. 
+%Dato un insieme di simboli $A$, l'insieme $A^*$ è definito come l'insieme delle stringhe finite su $A$.
+Con queste premesse possiamo definire come formule della logica proposizionale il linguaggio generato dalla
+grammatica Context Free seguente:
+$$
+\varphi  := \top \mid \bot \mid C \mid \lnot \varphi \mid (\varphi \land \varphi) \mid (\varphi \lor \varphi)
+$$
+
+Dove $C \in \Sigma_c$ è un simbolo di costante. Con la funzione $const(\gamma) \rightarrow \Sigma_c$ si indica la funzione che
+associa a ogni formula $\gamma$ l'insieme dei suoi simboli di costante.
+Vengono inoltre introdotti i seguenti simboli come abbreviazioni:
+
+\begin{itemize}
+    \item $(\gamma \Rightarrow \kappa)$ per $(\lnot \gamma \lor \kappa)$
+    \item $(\gamma \Leftrightarrow \kappa)$ per $((\gamma \Rightarrow \kappa) \land (\kappa \Rightarrow \gamma))$
+    \item $(\gamma \oplus \kappa)$ per $\lnot(\gamma \Leftrightarrow \kappa)$
+\end{itemize}
+
+È possibile rappresentare una qualunque formula attraverso il proprio albero di derivazione. Questo albero 
+verrà chiamato in seguito anche \textit{albero sintattico} della formula. Ad esempio, la formula 
+$(c_1 \land c_2) \lor \lnot c_3$ può essere rappresentata dal seguente albero sintattico:
+
+\begin{center}
+    \begin{tikzpicture}[level distance=1cm,
+        level 1/.style={sibling distance=3cm},
+        level 2/.style={sibling distance=1.5cm}]
+        \node {$\lor$}
+          child { node {$\land$}
+            child {node {$c_1$}}
+            child {node {$c_2$}}
+          }
+          child { node {$\lnot$}
+            child {node {$c_3$}}
+          };
+    \end{tikzpicture}
+\end{center}
+
+
+La radice dell'albero è detta \textit{connettivo principale}. Per compattezza, grazie alla proprietà associativa di $\land$ e $\lor$, è possibile omettere le parentesi, es. 
+$(c_1 \land (c_2 \land (c_3 \land c_4))) \lor c_5$ può essere scritto come $(c_1 \land c_2 \land c_3 \land c_4) \lor c_5$. 
+Allo stesso modo, nell'albero sintattico della formula è possibile compattare le catene di $\land$ e $\lor$ come figli di un unico nodo:
+
+\begin{center}
+    \begin{tikzpicture}[level distance=1cm,
+        level 1/.style={sibling distance=2.5cm},
+        level 2/.style={sibling distance=1cm}]
+        \node {$\lor$}
+          child { node {$\land$}
+            child {node {$c_1$}}
+            child {node {$c_2$}}
+            child {node {$c_3$}}
+            child {node {$c_4$}}
+          }
+            child { node {$c_5$}};
+    \end{tikzpicture}
+\end{center}
+
+Questa è una caratteristica molto importante, in quanto non solo permette di risparmiare inchiostro, ma consente di vedere
+$\land$ e $\lor$ non più come operatori binari ma come operatori n-ari. A livello implementativo, ciò si traduce in un minor
+impatto in memoria, visite all'albero più veloci e algoritmi di manipolazione più semplici. Si consideri ad esempio di voler ricercare la 
+foglia più a sinistra nell'albero di derivazione della seguente formula $(( ... (((c_1 \land c_2) \land c_3) \land c_4) \land ... )\land c_n)$.
+Senza compattazione, l'algoritmo di ricerca impiegherebbe $O(n)$ operazioni, mentre con la compattazione $O(1)$.
+
+% ---------------------- END FORMULE ----------------------
+
+
+
+       
+    \subsection{Assegnamenti}
+    \subsection{Forme Normali}
+    \subsection{Naming}
+
+\section{Logica del primo ordine}
+    \subsection{Termini}
+    \subsection{Formule}
+    \subsection{Semantica}
+    \subsection{Forme Normali}
+    \subsection{Skolemizzazione}
+    \subsection{Unificazione}
+
+\section{Soddisfacibilità e Validità}
+
+\section{Resolution}
+\section{Il formato TPTP}
+
+\end{document}
