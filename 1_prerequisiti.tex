@@ -2,7 +2,7 @@
 
 
 \begin{document}
-\chapter{Prerequisiti}
+\chapter{Logica e automazione dei problemi di Decisione}
 
 In questo capitolo verranno descritte le nozioni di base necessarie 
 per comprendere il lavoro svolto. 
@@ -31,7 +31,8 @@ $$
 $$
 
 Dove $C \in \Sigma_c$ è un simbolo di costante. Con la funzione $const(\gamma) \rightarrow \Sigma_c$ si indica la funzione che
-associa a ogni formula $\gamma$ l'insieme dei suoi simboli di costante.
+associa a ogni formula $\gamma$ l'insieme dei suoi simboli di costante. 
+Viene chiamato \textit{Letterale}, ogni simbolo di costante $c$ o la sua negazione $\lnot c$.
 Vengono inoltre introdotti i seguenti simboli come abbreviazioni:
 
 \begin{itemize}
@@ -60,7 +61,8 @@ $(c_1 \land c_2) \lor \lnot c_3$ può essere rappresentata dal seguente albero s
 \end{center}
 
 
-La radice dell'albero è detta \textit{connettivo principale}. Per compattezza, grazie alla proprietà associativa di $\land$ e $\lor$, è possibile omettere le parentesi, es. 
+La radice dell'albero è detta \textit{connettivo principale} e i sotto alberi della formula vengono dette \textit{sottoformule}.
+ Per compattezza, grazie alla proprietà associativa di $\land$ e $\lor$, è possibile omettere le parentesi, es. 
 $(c_1 \land (c_2 \land (c_3 \land c_4))) \lor c_5$ può essere scritto come $(c_1 \land c_2 \land c_3 \land c_4) \lor c_5$. 
 Allo stesso modo, nell'albero sintattico della formula è possibile compattare le catene di $\land$ e $\lor$ come figli di un unico nodo:
 
@@ -92,23 +94,80 @@ Senza compattazione, l'algoritmo di ricerca impiegherebbe $O(n)$ operazioni, men
 
 \subsection{Assegnamenti}
 
-Data una formula $\varphi \in F$ un assegnamento appropriato a $\varphi$ è una funzione 
-da un insieme $C : const(\varphi) \subseteq C \subseteq \Sigma_c$ nell'insieme $\{1, 0\}$ (o $\{True, False\}$)
+Un \textit{assegnamento} è una qualunque funzione $\alpha$ da un 
+insieme $C \subseteq \Sigma_c$ nell'insieme $\{1, 0\}$ (o $\{True, False\}$).
 $$ \alpha : C \rightarrow \{1, 0\} $$
-Si definisce la relazione binaria di Soddisfacibilità: 
-$$\models \subseteq \{1, 0\}^{\Sigma_c} \times F$$
-In modo tale che dato un assegnamento $\alpha$ appropriato a una formula $\varphi$, si dice che $\alpha$ è un assegnamento 
-per $\varphi$ o $\alpha \models \varphi$ ($\alpha$ soddisfa $\varphi$) se e solo se:
+Un assegnamento $\alpha$ è detto \textit{appropriato}  per una formula $\varphi \in F$ se e solo se $const(\varphi) \subseteq dom(\alpha)$.
+
+Si definisce la relazione binaria di \textit{Soddisfacibilità}: 
+$$\models \, \subseteq \{1, 0\}^{C} \times F$$
+In modo tale che dato un assegnamento $\alpha$ appropriato a una formula $\varphi$, si dice che $\alpha \models \varphi$ ($\alpha$ soddisfa $\varphi$) 
+o anche $\alpha$ è un assegnamento per $\varphi$ o  se e solo se:
 
 \begin{itemize}
-  \item Se $\varphi$ è una variabile allora $\alpha(\varphi) = 1$
-  \item 
+  \item Se $\varphi$ è una variabile $c_x$ allora $\alpha \models \varphi$ sse $\alpha(c_x) = 1$
+  \item Se $\varphi$ è della forma $\lnot \psi$ (dove $\psi$ è una formula) allora $\alpha \models \varphi$ sse $\alpha \not\models \psi$
+  \item Se $\varphi$ è della forma $(\psi \land \chi)$ (con $\psi$ e $\chi$ formule) allora $\alpha \models \varphi$ sse $\alpha \models \psi$ e $\alpha \models \chi$
+  \item Se $\varphi$ è della forma $(\psi \lor \chi)$ (con $\psi$ e $\chi$ formule) allora $\alpha \models \varphi$ sse $\alpha \models \psi$ o $\alpha \models \chi$
 \end{itemize}
+
+Una \textit{Tautologia} è una formula $\varphi$ tale che per ogni assegnamento $\alpha$ appropriato a $\varphi$, $\alpha \models \varphi$ (in simboli $\models \varphi$).
+Una formula è detta soddisfacibile se esiste un assegnamento appropriato che la soddisfa altrimenti è detta insoddisfacibile.
+Date due formule $\varphi$ e $\psi$, si dice che $\psi$ è \textit{conseguenza logica} di $\varphi$ (in simboli $\varphi \models \psi$) 
+se e solo se per ogni assegnamento $\alpha$ appropriato a entrambe le formule, se $\alpha \models \varphi$ allora $\alpha \models \psi$.
+Due formule sono dette \textit{equivalenti} sse $\varphi \models \psi$ e $\psi \models \varphi$ (in simboli $\varphi \equiv \psi$).
+Un'importante proprietà è che se $\varphi \models \psi$ allora la formula $\varphi \Rightarrow \psi$ 
+è una tautologia ($\models \varphi \Rightarrow \psi$).
+
+Due concetti molto simili a quello di equivalenza e conseguenza logica sono l'\textit{equisoddisfacibilità} e la \textit{soundness}. In pratica, due formule sono sound
+se e solo se, se la prima formula è soddisfacibile allora lo è anche la seconda. Due formule sono equisoddisfacibili se e solo se sono sound in entrambe le direzioni. 
+Quindi la conseguenza logica implica la soundness ma non il viceversa. Allo stesso modo l'equivalenza
+logica implica l'equisoddisfacibilità ma non il viceversa. Si consideri ad esempio le due formule $\varphi = c_1$ e $\psi = \lnot c_1$. Ovviamente non 
+può esserci conseguenza logica tra le due formule, ma sono equisoddisfacibili, infatti se $\alpha$ è un assegnamento per $\varphi$ allora è possibile
+costruire un assegnamento $\beta$ per $\psi$ tale che $\beta(c_1) = 1-\alpha(c_1)$ e viceversa.
+
+Un'\textit{inferenza} è una qualunque funzione da $F$ in $F$. Un'inferenza è detta \textit{corretta} se conserva la soddisfacibilità, ovvero 
+se non può generare una formula insoddisfacibile a partire da una formula soddisfacibile (soundness).
+
+Infine, si definisce \textit{Implicante} di una formula $\varphi$ un insieme $I$ di letterali di $\varphi$ che rendono vera $\varphi$. Cioè, costruendo una
+assegnazione $\alpha$ tale che $\alpha \models c$ per ogni letterale $c \in I$, si ha che $\alpha \models \varphi$. In altre parole la formula 
+costruita dalla congiunzione di tutti i letterali di $I$ implica logicamente $\varphi$. Spesso con abuso di terminologia gli elementi di $I$ vengono chiamati
+anch'essi implicanti, di solito è facile intuire dal contesto se si sta parlando dell'insieme o dei letterali.
+È possibile anche costruire un Implicante a partire da una assegnazione. È sufficiente prendere l'insieme dei letterali della formula soddisfatti dall'assegnamento e 
+si ottiene così un implicante.
 
 % ---------------------- END Assegnamenti ----------------------
 
-    \subsection{Forme Normali}
-    \subsection{Naming}
+% ---------------------- Forme Normali ----------------------
+\subsection{Forme Normali}
+Una delle strategie più utilizzate dai dimostratori di teoremi automatici è la \textit{normalizzazione} delle formule. Una \textit{forma normale}
+è essenzialmente un sottoinsieme di $F$ che rispetta determinate proprietà. Una \textit{normalizzazione} invece è il processo di trasformazione di una formula
+tramite una successione d'inferenze (corrette) in una forma normale. In questo paragrafo verranno descritte le forme normali che sono state utilizzate per il preprocessing
+dell'algoritmo.
+
+La prima tra queste è la \textit{NNF} ossia \textit{Negated Normal Form} (Forma normale negata). Una formula è in formato NNF 
+sse non contiene connettivi semplificati ($\Rightarrow$, $\Leftrightarrow$, $\oplus$) e la negazione è applicata solo a letterali. La classe di formule 
+NNF è generata dalla seguente grammatica:
+
+$$ \eta := \top \mid \bot \mid C \mid \lnot C \mid (\eta \land \eta) \mid (\eta \lor \eta ) $$
+
+Dove $C \in \Sigma_c$ è un simbolo di costante. La normalizzazione di una formula in NNF è un processo semplice che consiste nell'applicare opportunamente 
+le regole di De Morgan e le regole di semplificazione dei connettivi.
+
+Un altro formato che però non è abbastanza famoso da essere considerato 'standard' è
+la \textit{ENNF} ossia \textit{Extended Negated Normal Form} (Forma normale negata estesa). 
+Il formato ENNF è essenzialmente una classe più permissiva della NNF, in quanto conserva il vincolo sulla negazione ma 
+vieta esclusivamente l'uso di '$\Rightarrow$'. La classe di formule ENNF è generata dalla seguente grammatica:
+
+$$ \gamma  := \top \mid \bot \mid C \mid \lnot C \mid (\gamma \land \gamma) \mid (\gamma \lor \gamma ) \mid (\gamma \Leftrightarrow \gamma) \mid (\gamma \oplus \gamma) $$
+
+
+% ---------------------- END Forme Normali ----------------------
+
+% ---------------------- Naming ----------------------
+\subsection{Naming}
+
+% ---------------------- END Naming ----------------------
 
 \section{Logica del primo ordine}
     \subsection{Termini}
