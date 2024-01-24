@@ -24,7 +24,7 @@ algebra booleana e teoria dei linguaggi formali.
 Sia $\Sigma_c = \{c_1, c_2, ...\}$ un insieme di simboli di costante, 
 $\Sigma = \{ \land, \lor, \lnot, (, ), \top, \bot\} \cup \Sigma_c$ è detto alfabeto della logica proposizionale. 
 %Dato un insieme di simboli $A$, l'insieme $A^*$ è definito come l'insieme delle stringhe finite su $A$.
-Con queste premesse possiamo definire come formule della logica proposizionale il linguaggio generato dalla
+Con queste premesse possiamo definire come formule della logica proposizionale il linguaggio $F \subseteq \Sigma_c$ generato dalla
 grammatica Context Free seguente:
 $$
 \varphi  := \top \mid \bot \mid C \mid \lnot \varphi \mid (\varphi \land \varphi) \mid (\varphi \lor \varphi)
@@ -88,9 +88,25 @@ Senza compattazione, l'algoritmo di ricerca impiegherebbe $O(n)$ operazioni, men
 % ---------------------- END FORMULE ----------------------
 
 
+% ---------------------- Assegnamenti ----------------------
 
-       
-    \subsection{Assegnamenti}
+\subsection{Assegnamenti}
+
+Data una formula $\varphi \in F$ un assegnamento appropriato a $\varphi$ è una funzione 
+da un insieme $C : const(\varphi) \subseteq C \subseteq \Sigma_c$ nell'insieme $\{1, 0\}$ (o $\{True, False\}$)
+$$ \alpha : C \rightarrow \{1, 0\} $$
+Si definisce la relazione binaria di Soddisfacibilità: 
+$$\models \subseteq \{1, 0\}^{\Sigma_c} \times F$$
+In modo tale che dato un assegnamento $\alpha$ appropriato a una formula $\varphi$, si dice che $\alpha$ è un assegnamento 
+per $\varphi$ o $\alpha \models \varphi$ ($\alpha$ soddisfa $\varphi$) se e solo se:
+
+\begin{itemize}
+  \item Se $\varphi$ è una variabile allora $\alpha(\varphi) = 1$
+  \item 
+\end{itemize}
+
+% ---------------------- END Assegnamenti ----------------------
+
     \subsection{Forme Normali}
     \subsection{Naming}
 
