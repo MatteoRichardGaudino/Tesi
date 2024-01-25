@@ -13,7 +13,7 @@ primo ordine possono essere rappresentate in un formato di file, per poi essere
 processate come input da un theorem prover. 
 Lo scopo di questo capitolo è quello di accennare la teoria logica utilizzata nell'implementazione di vampire 
 e della procedura di decisione per i Binding-Fragments. Perciò, verranno date per scontate nozioni di teoria degli insiemi,
-algebra booleana e teoria dei linguaggi formali.
+algebra e teoria dei linguaggi.
 
 
 
@@ -142,8 +142,9 @@ si ottiene così un implicante.
 \subsection{Forme Normali}
 Una delle strategie più utilizzate dai dimostratori di teoremi automatici è la \textit{normalizzazione} delle formule. Una \textit{forma normale}
 è essenzialmente un sottoinsieme di $F$ che rispetta determinate proprietà. Una \textit{normalizzazione} invece è il processo di trasformazione di una formula
-tramite una successione d'inferenze (corrette) in una forma normale. In questo paragrafo verranno descritte le forme normali che sono state utilizzate per il preprocessing
-dell'algoritmo.
+tramite una successione d'inferenze (corrette) in una forma normale. In questo paragrafo verranno descritte le tre forme normali che sono state utilizzate per il preprocessing
+dell'algoritmo. La prima e l'ultima ossia le forme NNF e CNF sono le più famose e utilizzate, mentre la seconda, la ENNF, non è abbastanza conosciuta da essere definita standard
+e viene utilizzata per bypassare alcuni problemi di efficienza causati dalla CNF grazie all'utilizzo di tecniche di Naming, che però verranno discusse nella prossima sezione.
 
 La prima tra queste è la \textit{NNF} ossia \textit{Negated Normal Form} (Forma normale negata). Una formula è in formato NNF 
 sse non contiene connettivi semplificati ($\Rightarrow$, $\Leftrightarrow$, $\oplus$) e la negazione è applicata solo a letterali. La classe di formule 
@@ -154,12 +155,38 @@ $$ \eta := \top \mid \bot \mid C \mid \lnot C \mid (\eta \land \eta) \mid (\eta 
 Dove $C \in \Sigma_c$ è un simbolo di costante. La normalizzazione di una formula in NNF è un processo semplice che consiste nell'applicare opportunamente 
 le regole di De Morgan e le regole di semplificazione dei connettivi.
 
-Un altro formato che però non è abbastanza famoso da essere considerato 'standard' è
-la \textit{ENNF} ossia \textit{Extended Negated Normal Form} (Forma normale negata estesa). 
+La seconda forma normale è la \textit{ENNF} ossia \textit{Extended Negated Normal Form} (Forma normale negata estesa). 
 Il formato ENNF è essenzialmente una classe più permissiva della NNF, in quanto conserva il vincolo sulla negazione ma 
 vieta esclusivamente l'uso di '$\Rightarrow$'. La classe di formule ENNF è generata dalla seguente grammatica:
+ 
+$$ \overline{\eta}  := \top \mid \bot \mid C \mid \lnot C \mid (\overline{\eta} \land \overline{\eta}) \mid (\overline{\eta} \lor \overline{\eta} ) \mid (\overline{\eta} \Leftrightarrow \overline{\eta}) \mid (\overline{\eta} \oplus \overline{\eta}) $$
 
-$$ \gamma  := \top \mid \bot \mid C \mid \lnot C \mid (\gamma \land \gamma) \mid (\gamma \lor \gamma ) \mid (\gamma \Leftrightarrow \gamma) \mid (\gamma \oplus \gamma) $$
+La terza e ultima forma normale è la \textit{CNF} ossia \textit{Conjunctive Normal Form} (Forma normale congiuntiva). Una formula è in formato CNF
+sse è una congiunzione di disgiunzioni di letterali. La classe di formule CNF è generata dalla seguente grammatica:
+
+
+$$ \zeta := \xi \mid (\xi \land \zeta) $$
+$$ \xi := \top \mid \bot \mid C \mid \lnot C \mid (\xi \lor \xi ) $$
+
+La classe CNF è storicamente la più famosa e utilizzata, in quanto è la più semplice da implementare e da manipolare. È possibile vedere le clausole
+come insiemi di letterali mentre la formula principale è vista come un insieme di clausole. Ad esempio, la CNF $(c_1 \lor \lnot c_2) \land (c_3)$ può essere rappresentata
+in termini insiemistici come $\{\{c_1, \lnot c_2\}, \{c_3\}\}$. 
+La clausola vuota $\{\}$ è una clausola speciale che rappresenta la formula $\bot$, viene spesso raffigurata dal simbolo $\square$.
+La normalizzazione di una formula in CNF è un processo più complesso rispetto alle altre due forme normali. Non esiste un unica tecnica di normalizzazione, ma
+una strategia comune è questa:
+\begin{enumerate}
+  \item Si trasforma la formula in NNF.
+  \item Se la formula è del tipo $\varphi_1 \land ... \land \varphi_n$ allora la struttura principale è già una congiunzione di formule,
+   quindi si procede applicando l'algoritmo sulle sottoformule $\varphi_1, ..., \varphi_n$.
+  \item Se la formula è del tipo $(\varphi_1 \land \varphi_2) \lor \psi_1$ si applica la proprietà distributiva di $\lor$ su $\land$ in 
+  modo da spingere i connettivi $\lor$ il più possibile in profondità. Si ottiene così una formula del tipo
+  $(\varphi_1 \lor \psi_1) \land (\varphi_2 \lor \psi_1)$ si procede poi ricorsivamente con il punto 2.
+\end{enumerate}
+
+Il processo di generazione delle clausole prende il nome di \textit{clausificazione}.
+Questa tecnica di clausificazione nella peggiore delle ipotesi porta a una generazione di un numero di clausole esponenziale 
+rispetto alla dimensione della formula originale. Ad esempio la formula $(c_1 \land c_2) \lor (c_3 \land c_4) \lor ... \lor (c_{n-1} \land c_{n})$ 
+genera esattamente $2^{n}$ clausole diverse tutte da $n$ letterali.
 
 
 % ---------------------- END Forme Normali ----------------------
@@ -170,12 +197,92 @@ $$ \gamma  := \top \mid \bot \mid C \mid \lnot C \mid (\gamma \land \gamma) \mid
 % ---------------------- END Naming ----------------------
 
 \section{Logica del primo ordine}
-    \subsection{Termini}
-    \subsection{Formule}
-    \subsection{Semantica}
-    \subsection{Forme Normali}
-    \subsection{Skolemizzazione}
-    \subsection{Unificazione}
+  
+% ---------------------- Termini ----------------------
+\subsection{Termini e Formule}
+Oltre al solito insieme $\Sigma_c$ di simboli di costante, vengono introdotti tre nuovi insiemi di simboli:
+\begin{itemize}
+  \item $\Sigma_f = \{f_1, f_2, ...\}$ insieme di simboli di funzione
+  \item $\Sigma_p = \{p_1, p_2, ...\}$ insieme di simboli di predicato (o relazione)
+  \item $\Sigma_x = \{x_1, x_2, ...\}$ insieme di simboli di variabile
+\end{itemize}
+
+Definiamo la funzione $arity : \Sigma_f \cup \Sigma_p \rightarrow \mathbb{N}$ che associa ad ogni simbolo di funzione o predicato la sua arità.
+Un \textit{termine} è una stringa generata dalla seguente grammatica:
+
+$$ \tau := X \mid C \mid f(\tau_1, ..., \tau_n) $$
+
+Dove $X$ è un simbolo di variabile, $C$ è un simbolo di costante e $f$ è un simbolo di funzione tale che $arity(f) = n$. In altre parole:
+\begin{itemize}
+  \item Ogni variabile è un termine
+  \item Ogni costante è un termine
+  \item Se $\tau_1, ..., \tau_n$ sono termini e $f$ è un simbolo di funzione di arità $n$ allora $f(\tau_1, ..., \tau_n)$ è un termine
+\end{itemize}
+
+Indichiamo con $T$ l'insieme di tutti i termini generati dalla grammatica precedente.
+Chiameremo \textit{Atomo} tutte le stringhe del tipo $p(\tau_1, ..., \tau_n)$ dove $p$ è un simbolo di relazione
+di arità $n$ e $\tau_1, ..., \tau_n$ sono termini. Vengono chiamati \textit{Letterali} tutti gli atomi o la loro negazione.
+Termini e Letterali sono detti \textit{ground} se non contengono variabili.
+Come già visto per le formule proposizionali, è possibile rappresentare un termine o un letterale
+attraverso il proprio albero di derivazione. Ad esempio, il letterale $p_1(f(x_1, c_2), c_1)$ può essere rappresentato dal seguente albero sintattico:
+
+\begin{center}
+  \begin{tikzpicture}[level distance=1cm,
+    level 1/.style={sibling distance=3cm},
+    level 2/.style={sibling distance=1.5cm}]
+    \node {$p$}
+      child { node {$f$}
+        child {node {$x_1$}}
+        child {node {$c_2$}}
+      }
+      child { node {$c_1$}};
+  \end{tikzpicture}
+\end{center}
+
+Come intuibile i sottoalberi di un termine sono detti \textit{sottotermini}. Si assuma di avere due letterali $p_1(c_1, f_1(x_1, c_2))$ e 
+$\lnot p_1(f_2(f_1(x_1, c_2), c_2), c_2)$ di volerli rappresentare in un unico grafo. Al posto di creare una foresta con due alberi indipendenti,
+è possibile creare un unica struttura condividendo i sottotermini comuni:
+
+\begin{center}
+  \begin{tikzpicture}[level distance=1cm,
+    level 1/.style={sibling distance=3cm},
+    level 2/.style={sibling distance=1.5cm}]
+    
+    \node (p) at (0.5, 0) {$p_1$};
+    \node (np) at (3, 0) {$\lnot p_1$};
+    \node (f) at (1, -1) {$f_1$};
+    \node (g) at (2, -1) {$f_2$};
+    \node (x) at (0.5, -2) {$x_1$};
+    \node (c1) at (0, -1) {$c_1$};
+    \node (c2) at (2, -2) {$c_2$};
+
+    \path [->] (p) edge (f);
+    \path [->] (p) edge (c1);
+
+    \path [->] (np) edge (g);
+    \path [->] (np) edge (c2);
+
+    \path [->] (f) edge (x);
+    \path [->] (f) edge (c2);
+
+    \path [->] (g) edge (f);
+    \path [->] (g) edge (c2);
+
+  \end{tikzpicture}
+\end{center}
+
+Una struttura del genere è detta \textit{Prfectly Shared} (Perfettamente condivisa). Nella pratica questa
+tecnica di condivisione di sottotermini è indispensabile dato che,
+anche se a un costo per la creazione e la gestione non indifferente,
+permette un risparmio di memoria e di tempo considerevole. Per effettuare ad esempio un controllo 
+di uguaglianza tra due sottotermini è sufficiente controllare che le due frecce che partono dai termini padre
+puntino allo stesso sottotermine, senza dover visitare l'intera sotto struttura, rendendo così tale operazione a tempo costante.
+
+% ---------------------- END Termini ----------------------
+\subsection{Semantica}
+\subsection{Forme Normali}
+\subsection{Skolemizzazione}
+\subsection{Unificazione}
 
 \section{Soddisfacibilità e Validità}
 
