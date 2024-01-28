@@ -24,7 +24,7 @@ algebra e teoria dei linguaggi.
 Sia $\Sigma_c = \{c_1, c_2, ...\}$ un insieme di simboli di costante, 
 $\Sigma = \{ \land, \lor, \lnot, (, ), \top, \bot\} \cup \Sigma_c$ è detto alfabeto della logica proposizionale. 
 %Dato un insieme di simboli $A$, l'insieme $A^*$ è definito come l'insieme delle stringhe finite su $A$.
-Con queste premesse possiamo definire come formule della logica proposizionale il linguaggio $F \subseteq \Sigma_c$ generato dalla
+Con queste premesse possiamo definire come formule della logica proposizionale il linguaggio $F$ generato dalla
 grammatica Context Free seguente:
 $$
 \varphi  := \top \mid \bot \mid C \mid \lnot \varphi \mid (\varphi \land \varphi) \mid (\varphi \lor \varphi)
@@ -142,8 +142,11 @@ si ottiene così un implicante.
 \subsection{Forme Normali}
 Una delle strategie più utilizzate dai dimostratori di teoremi automatici è la \textit{normalizzazione} delle formule. Una \textit{forma normale}
 è essenzialmente un sottoinsieme di $F$ che rispetta determinate proprietà. Una \textit{normalizzazione} invece è il processo di trasformazione di una formula
-tramite una successione d'inferenze (corrette) in una forma normale. In questo paragrafo verranno descritte le tre forme normali che sono state utilizzate per il preprocessing
-dell'algoritmo. La prima e l'ultima ossia le forme NNF e CNF sono le più famose e utilizzate, mentre la seconda, la ENNF, non è abbastanza conosciuta da essere definita standard
+tramite una successione d'inferenze (corrette) in una forma normale.
+In questo paragrafo verranno descritte le tre forme normali che sono state utilizzate per il preprocessing
+dell'algoritmo. In questo caso, tutte e tre le forme presentate preservano la relazione di equivalenza logica, quindi è sempre possibile
+trasformare una formula in un'altra equivalente in uno di questi tre formati. 
+La prima e l'ultima ossia le forme NNF e CNF sono le più famose e utilizzate, mentre la seconda, la ENNF, non è abbastanza conosciuta da essere definita standard
 e viene utilizzata per bypassare alcuni problemi di efficienza causati dalla CNF grazie all'utilizzo di tecniche di Naming, che però verranno discusse nella prossima sezione.
 
 La prima tra queste è la \textit{NNF} ossia \textit{Negated Normal Form} (Forma normale negata). Una formula è in formato NNF 
@@ -221,7 +224,9 @@ Dove $X$ è un simbolo di variabile, $C$ è un simbolo di costante e $f$ è un s
 
 Indichiamo con $T$ l'insieme di tutti i termini generati dalla grammatica precedente.
 Chiameremo \textit{Atomo} tutte le stringhe del tipo $p(\tau_1, ..., \tau_n)$ dove $p$ è un simbolo di relazione
-di arità $n$ e $\tau_1, ..., \tau_n$ sono termini. Vengono chiamati \textit{Letterali} tutti gli atomi o la loro negazione.
+di arità $n$ e $\tau_1, ..., \tau_n$ sono termini.
+Consideriamo atomi anche tutti i simboli di costante.
+Vengono chiamati \textit{Letterali} tutti gli atomi e la loro negazione.
 Termini e Letterali sono detti \textit{ground} se non contengono variabili.
 Come già visto per le formule proposizionali, è possibile rappresentare un termine o un letterale
 attraverso il proprio albero di derivazione. Ad esempio, il letterale $p_1(f(x_1, c_2), c_1)$ può essere rappresentato dal seguente albero sintattico:
@@ -278,14 +283,108 @@ permette un risparmio di memoria e di tempo considerevole. Per effettuare ad ese
 di uguaglianza tra due sottotermini è sufficiente controllare che le due frecce che partono dai termini padre
 puntino allo stesso sottotermine, senza dover visitare l'intera sotto struttura, rendendo così tale operazione a tempo costante.
 
+
+A questo punto definiamo finalmente le formule della logica del primo ordine. Prendendo come punto di partenza le formule proposizionali,
+chiamiamo alfabeto delle formule del primo ordine 
+$\Sigma' = \Sigma \cup \Sigma_f \cup \Sigma_p \cup \Sigma_x \cup \{\forall, \exists\}$ 
+e definiamo come formule del primo ordine il linguaggio $F'$ generato dalla seguente grammatica:
+
+$$ \phi := \top \mid \bot \mid A \mid \lnot \phi \mid (\phi \land \phi) \mid (\phi \lor \phi) \mid \forall x (\phi) \mid \exists x (\phi) $$
+
+Dove $A$ è un atomo e $x$ è un simbolo di variabile. I simboli $\forall$ e $\exists$ sono detti quantificatori universali ed esistenziali.
+Una variabile $x$ è detta \textit{vincolata} se è contenuta in una formula del tipo $\forall x (\varphi')$ o $\exists x (\varphi')$ 
+altrimenti è detta \textit{libera}. Una formula è detta \textit{enunciato} se non contiene variabili libere. Una formula è detta 
+\textit{ground} se tutti i suoi letterali sono ground.
+
+Per comodità di scrittura è possibile raggruppare catene di quantificatori dello stesso tipo. Ad esempio, la formula 
+$ \forall x_1 \forall x_2 \forall x_3 \exists x_4 \exists x_5 \forall x_6 \forall x_7 (\phi)$ può essere scritta come 
+$\forall x_1 x_2 x_3 \exists x_4 x_5 \forall x_6 x_7 (\phi)$. Così come visto per $\lor$ e $\land$ è possibile vedere
+$\forall$ e $\exists$ come operatori n-ari che prendono in input n-1 variabili e una formula.
+
+
 % ---------------------- END Termini ----------------------
+
+% ---------------------- Semantica ----------------------
 \subsection{Semantica}
-\subsection{Forme Normali}
-\subsection{Skolemizzazione}
+
+
+% ---------------------- END Semantica ----------------------
+
+% ---------------------- Skolemizzazione e Forme Normali  ----------------------
+\subsection{Skolemizzazione e Forme Normali}
+In questo paragrafo verrà descritta una procedura fondamentale per la dimostrazione automatica di teoremi, la \textit{Skolemizzazione}. Varrà inoltre introdotta
+una nuova forma normale chiamata \textit{PNF} e verranno
+estese le forme normali descritte nel paragrafo della logica proposizionale per adattarle alla logica del primo ordine.
+
+
+La definizione per le forme ENNF e NNF per la logica del primo ordine è pressoché identica a quella della logica proposizionale.
+Come per la logica proposizionale, la trasformazione di una formula in ENNF/NNF preserva la relazione di conseguenza logica ed è sempre
+possibile trasformare una formula in una equivalente in ENNF/NNF. 
+Il calcolo per la normalizzazione viene effettuato allo stesso modo ma con l'aggiunta di due regole per la negazione dei quantificatori:
+
+$$ \lnot \forall x (\varphi) \rightarrow \exists x (\lnot \varphi) $$
+$$ \lnot \exists x (\varphi) \rightarrow \forall x (\lnot \varphi) $$
+
+
+Chiameremo \textit{prefisso di quantificatori} una lista di quantificatori (es. $\forall x_1 \forall x_2 \exists x_3$). 
+Un prefisso viene detto \textit{universale} se è composto esclusivamente da quantificatori universali e viene detto \textit{esistenziali} 
+se è composto esclusivamente da quantificatori esistenziali. Una formula è in formato PNF (Prenex Normal Form) se tutti e soli 
+i quantificatori si trovano all'inizio della formula. La classe di formule PNF è generata dalla seguente grammatica:
+
+$$ P_0 := \rho(P) $$
+$$ P := \top \mid \bot \mid A \mid \lnot P \mid (P \land P) \mid (P \lor P) $$
+
+Dove $\rho$ è un prefisso di quantificatori e $A$ è un atomo.
+La parte della formula generata dalla seconda regola viene spesso chiamata \textit{matrice}.
+È sempre possibile normalizzare una formula in PNF, è un processo sound, ma non è sempre possibile mantenere la relazione di conseguenza logica.
+
+
+La skolemizzazione è una procedura che permette di eliminare i quantificatori esistenziali da una formula. 
+Sia $\rho$ un prefisso di quantificatori qualunque, la funzione $sk : F' \rightarrow F'$ può essere descritta in questo modo:
+
+\begin{itemize}
+  \item Se la formula è del tipo $\exists x(\rho \phi)$ allora $sk$ rimuove il primo quantificatore esistenziale e sostituisce 
+  la variabile $x$ all'interno della formula con una nuova costante $c_{n+1}$, dove $n$ è il massimo indice di costante presente nella formula.
+
+  \item Se la formula è del tipo $\forall x_k ... x_{k+m-1} \exists x_{k+m} (\rho \phi)$ allora $sk$ rimuove 
+  il primo quantificatore esistenziale e sostituisce la variabile $x_{k+m}$ all'interno della formula con una nuova funzione 
+  $f_{n+1}(x_k, ... , x_{k+m-1})$
+  $m-1$-aria, dove $n$ è il massimo indice di funzione presente nella formula.
+\end{itemize}
+
+Applicando la funzione $sk$ tante volte quanto il numero di quantificatori esistenziali presenti nella formula si ottiene una formula 
+senza quantificatori esistenziali. Anche la skolemizzazione è un processo sound, ma non è detto che preservi la conseguenza logica.
+
+
+
+Combinando le tecniche apprese finora è possibile definire una procedura di normalizzazione che permette di trasformare una formula del primo ordine
+in formato CNF. Le formule CNF per il primo ordine sono definite come segue:
+
+$$ \zeta_0 := \rho(\zeta_1) $$
+$$ \zeta_1 := \xi \mid (\xi \land \zeta_1) $$
+$$ \xi := \top \mid \bot \mid C \mid \lnot C \mid (\xi \lor \xi ) $$
+
+Dove $\rho$ è un prefisso di quantificatori universale. Per ottenere una formula CNF è sufficiente:
+
+\begin{enumerate}
+  \item Normalizzare la formula in NNF
+  \item Normalizzare la formula in PNF
+  \item Skolemizzare la formula
+  \item Applicare lo stesso algoritmo di clausificazione descritto per la logica proposizionale sulla matrice della formula
+\end{enumerate}
+
+Visto le tecniche applicate il processo di clausificazione per la logica del primo ordine è sound ma non preserva la conseguenza logica.
+Dato che in una formula CNF tutte le variabili sono universalmente quantificate per brevità è possibile omettere il prefisso di quantificatori.
+Ad esempio, la formula CNF $\forall x_1 x_2 x_3 x_4 (\lnot p_1(x_1) \lor p_2(x_2) \lor p_3(x_3)) \land (\lnot p_4(x_4))$ può essere scritta come
+$(\lnot p_1(x_1) \lor p_2(x_2) \lor p_3(x_3)) \land (\lnot p_4(x_4))$ e quindi rappresentata
+in forma insiemistica come $\{\{\lnot p_1(x_1), p_2(x_2), p_3(x_3)\}, \{\lnot p_4(x_4)\}\}$.
+
+% ---------------------- END Skolemizzazione e Forme Normali ----------------------
+
+
 \subsection{Unificazione}
 
 \section{Soddisfacibilità e Validità}
-
 \section{Resolution}
 \section{Il formato TPTP}
 
