@@ -1,1 +1,10 @@
 ./out/aux
+out/aux/1_prerequisiti.aux
+out/aux/1_prerequisiti.fdb_latexmk
+out/aux/1_prerequisiti.fls
+out/aux/1_prerequisiti.log
+out/aux/main.aux
+out/aux/main.fdb_latexmk
+out/aux/main.fls
+out/aux/main.log
+out/aux/main.toc

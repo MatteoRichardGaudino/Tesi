@@ -24,7 +24,7 @@ algebra e teoria dei linguaggi.
 Sia $\Sigma_c = \{c_1, c_2, ...\}$ un insieme di simboli di costante, 
 $\Sigma = \{ \land, \lor, \lnot, (, ), \top, \bot\} \cup \Sigma_c$ è detto alfabeto della logica proposizionale. 
 %Dato un insieme di simboli $A$, l'insieme $A^*$ è definito come l'insieme delle stringhe finite su $A$.
-Con queste premesse possiamo definire come formule della logica proposizionale il linguaggio $F$ generato dalla
+Con queste premesse si può definire come formule della logica proposizionale il linguaggio $F$ generato dalla
 grammatica Context Free seguente:
 $$
 \varphi  := \top \mid \bot \mid C \mid \lnot \varphi \mid (\varphi \land \varphi) \mid (\varphi \lor \varphi)
@@ -105,12 +105,13 @@ In modo tale che dato un assegnamento $\alpha$ appropriato a una formula $\varph
 o anche $\alpha$ è un assegnamento per $\varphi$ o  se e solo se:
 
 \begin{itemize}
-  \item Se $\varphi$ è una variabile $c_x$ allora $\alpha \models \varphi$ sse $\alpha(c_x) = 1$
+  \item Se $\varphi$ è una costante (o $\top$/$\bot$) $c_x$ allora $\alpha \models \varphi$ sse $\alpha(c_x) = 1$
   \item Se $\varphi$ è della forma $\lnot \psi$ (dove $\psi$ è una formula) allora $\alpha \models \varphi$ sse $\alpha \not\models \psi$
   \item Se $\varphi$ è della forma $(\psi \land \chi)$ (con $\psi$ e $\chi$ formule) allora $\alpha \models \varphi$ sse $\alpha \models \psi$ e $\alpha \models \chi$
   \item Se $\varphi$ è della forma $(\psi \lor \chi)$ (con $\psi$ e $\chi$ formule) allora $\alpha \models \varphi$ sse $\alpha \models \psi$ o $\alpha \models \chi$
 \end{itemize}
 
+Per convenzione si assume che $\alpha(\top) = 1$ e $\alpha(\bot) = 0$ per ogni assegnamento $\alpha$.
 Una \textit{Tautologia} è una formula $\varphi$ tale che per ogni assegnamento $\alpha$ appropriato a $\varphi$, $\alpha \models \varphi$ (in simboli $\models \varphi$).
 Una formula è detta soddisfacibile se esiste un assegnamento appropriato che la soddisfa altrimenti è detta insoddisfacibile.
 Date due formule $\varphi$ e $\psi$, si dice che $\psi$ è \textit{conseguenza logica} di $\varphi$ (in simboli $\varphi \models \psi$) 
@@ -210,7 +211,8 @@ Oltre al solito insieme $\Sigma_c$ di simboli di costante, vengono introdotti tr
   \item $\Sigma_x = \{x_1, x_2, ...\}$ insieme di simboli di variabile
 \end{itemize}
 
-Definiamo la funzione $arity : \Sigma_f \cup \Sigma_p \rightarrow \mathbb{N}$ che associa ad ogni simbolo di funzione o predicato la sua arità.
+Si definisce la funzione $arity : \Sigma_f \cup \Sigma_p \rightarrow \mathbb{N}$ che associa ad ogni simbolo di funzione o predicato la sua arità.
+I simboli contenuti in $\Sigma_c \cup \Sigma_f \cup \Sigma_p$ sono detti \textit{simboli non logici} e ogni suo sottoinsieme è detto \textit{tipo}.
 Un \textit{termine} è una stringa generata dalla seguente grammatica:
 
 $$ \tau := X \mid C \mid f(\tau_1, ..., \tau_n) $$
@@ -222,10 +224,10 @@ Dove $X$ è un simbolo di variabile, $C$ è un simbolo di costante e $f$ è un s
   \item Se $\tau_1, ..., \tau_n$ sono termini e $f$ è un simbolo di funzione di arità $n$ allora $f(\tau_1, ..., \tau_n)$ è un termine
 \end{itemize}
 
-Indichiamo con $T$ l'insieme di tutti i termini generati dalla grammatica precedente.
+Si indica con $T$ l'insieme di tutti i termini generati dalla grammatica precedente.
 Chiameremo \textit{Atomo} tutte le stringhe del tipo $p(\tau_1, ..., \tau_n)$ dove $p$ è un simbolo di relazione
 di arità $n$ e $\tau_1, ..., \tau_n$ sono termini.
-Consideriamo atomi anche tutti i simboli di costante.
+Si considerano atomi anche tutti i simboli di costante.
 Vengono chiamati \textit{Letterali} tutti gli atomi e la loro negazione.
 Termini e Letterali sono detti \textit{ground} se non contengono variabili.
 Come già visto per le formule proposizionali, è possibile rappresentare un termine o un letterale
@@ -284,10 +286,10 @@ di uguaglianza tra due sottotermini è sufficiente controllare che le due frecce
 puntino allo stesso sottotermine, senza dover visitare l'intera sotto struttura, rendendo così tale operazione a tempo costante.
 
 
-A questo punto definiamo finalmente le formule della logica del primo ordine. Prendendo come punto di partenza le formule proposizionali,
-chiamiamo alfabeto delle formule del primo ordine 
+A questo punto si definisce finalmente le formule della logica del primo ordine. Prendendo come punto di partenza le formule proposizionali,
+si definisce alfabeto delle formule del primo ordine l'insieme: 
 $\Sigma' = \Sigma \cup \Sigma_f \cup \Sigma_p \cup \Sigma_x \cup \{\forall, \exists\}$ 
-e definiamo come formule del primo ordine il linguaggio $F'$ generato dalla seguente grammatica:
+e Si definisce come formule del primo ordine il linguaggio $F'$ generato dalla seguente grammatica:
 
 $$ \phi := \top \mid \bot \mid A \mid \lnot \phi \mid (\phi \land \phi) \mid (\phi \lor \phi) \mid \forall x (\phi) \mid \exists x (\phi) $$
 
@@ -304,9 +306,173 @@ $\forall$ e $\exists$ come operatori n-ari che prendono in input n-1 variabili e
 
 % ---------------------- END Termini ----------------------
 
+% ---------------------- Unificazione ----------------------
+\subsection{Unificazione}
+Dato un termine $\tau$ (o un letterale), con la scrittura $\tau[x_k/t]$ si indica il termine (o il letterale) ottenuto sostituendo
+tutte le occorrenze della variabile $x_k$ con il termine $t$ in $\tau$. Ad esempio se $\tau = f(x_1, x_2)$ allora $\tau[x_1/c_1] = f(c_1, x_2)$.
+Si può estendere questa notazione in modo da poter sostituire più variabili contemporaneamente. 
+Si definisce come \textit{sostituzione} una qualunque funzione da variabili a termini.
+Dato un termine $\tau$ e una sostituzione $\sigma = \{(x_1, t_1), ..., (x_n, t_n)\}$,
+con la scrittura $\tau[x_1/t_1, ..., x_n/t_n]$ oppure $\tau^\sigma$ si indica il termine ottenuto sostituendo \textit{contemporaneamente} 
+tutte le occorrenze delle variabili $x_1, ..., x_n$ con i termini $t_1, ..., t_n$ in $\tau$.
+Con contemporaneamente si intende che ogni singola sostituzione viene effettuata sul termine originale, 
+senza essere influenzata dalle sostituzioni precedenti o successive.
+Ad esempio, se $\tau = f(x_1, x_2)$ allora $\tau[x_1/x_2, x_2/x_1] = f(x_2, x_1)$ e non $f(x_1, x_1)$ 
+che è invece il risultato dell'applicazione sequenziale delle due regole $\tau[x_1/x_2][x_2/x_1]$.
+
+Dati due termini $\tau_1$ e $\tau_2$ si dice che $\tau_1$ è \textit{più generico} di $\tau_2$ o che $\tau_2$ è \textit{più specifico} di $\tau_1$
+se e solo se esiste una sostituzione $\sigma$ tale che $\tau_1^\sigma = \tau_2$.
+Se esiste una sostituzione $\sigma$ tale che $\tau_1^\sigma = \tau_2^\sigma$ allora i due termini sono detti \textit{unificabili} e 
+la sostituzione $\sigma$ è detta \textit{unificatore} dei due termini.
+
+
+Date due sostituzioni $\sigma_1$ e $\sigma_2$ si dice che $\sigma_1$ 
+è \textit{più generica} di $\sigma_2$ o che $\sigma_2$ è \textit{più specifica} di $\sigma_1$ se e solo se 
+per ogni termine $\theta$, $\sigma_2$ è sussunta da $\sigma_1$, 
+ossia sse esiste una sostituzione $\theta$ tale che $\tau^{\sigma_2} = {(\tau^{\sigma_1})}^\theta$.
+Dati due termini unificabili $\tau_1$ e $\tau_2$ si dice che $\sigma_1$ è un \textit{MGU} (Most General Unifier) di $\tau_1$ e $\tau_2$ 
+se è la sostituzione più generica tra tutti gli unificatori dei due termini.
+
+
+È possibile generalizzare il concetto di unificazione per insiemi di termini, letterali e insiemi di letterali.
+Dato un insieme di termini $T$, si dice che $T$ è unificabile se esiste una sostituzione $\sigma$ tale che $\tau_1^\sigma = \tau_2^\sigma$
+per ogni coppia di termini $\tau_1, \tau_2 \in T$. In questo caso $\sigma$ è detto unificatore di $T$. 
+Due letterali della stessa arità $L_1 = p_1(\tau_1, ..., \tau_n)$ e $L_2 = p_2(\tau_1', ..., \tau_n')$ 
+sono unificabili se e solo se esiste una sostituzione che li eguaglia ignorando il simbolo di predicato.
+In altre parole sia $f$ una funzione di arità $n$ allora $L_1$ e $L_2$ sono unificabili se e solo se sono unificabili i termini
+$f(\tau_1, ..., \tau_n)$ e $f(\tau_1', ..., \tau_n')$.
+Letterali di diversa arità non sono mai unificabili.
+Un insieme di letterali è unificabile se e solo se esiste una sostituzione che unifica a due a due tutti i letterali dell'insieme.
+
+
+Un importante risultato è questo:
+\newtheorem{proposition}{Proposizione}
+\begin{proposition}
+  Se due termini non sono unificabili allora vale una delle seguenti affermazioni:
+  \begin{enumerate}
+    \item I due termini hanno arità diverse
+    \item I due termini presentano una function obstruction 
+    \item I due termini presentano una variable obstruction
+  \end{enumerate}
+\end{proposition}
+
+Una function obstruction è una situazione in cui visitando allo stesso modo l'albero sintattico dei termini si incontrano
+due simboli di funzione diversi. Ad esempio, i termini $f_1(x_1, f_2(x_2))$ e $f_1(x_1, f_3(x_2))$ non sono unificabili in quanto
+presentano una function obstruction, $f_2 \neq f_3$. Una variable obstruction invece è una situazione in cui visitando allo stesso modo
+l'albero sintattico dei termini si incontra una variabile $x$ nel primo termine 
+e si incontra un sottotermine $t \; (\neq x)$ che contiene $x$ nel secondo termine. Ad esempio i termini $f_1(x_1, f_2(x_2))$ e $f_1(f_2(x_1), x_1)$
+non sono unificabili in quanto presentano una variable obstruction, $x_1$ è contenuta in $f_2(x_1)$.
+
+
+Un noto algoritmo per la ricerca di un MGU di due termini è l'algoritmo di unificazione di \textit{Robinson}. Il collo di bottiglia di questo 
+algoritmo è la occurrence-check, ovvero la ricerca di una variable obstruction. Se si assume che i termini in 
+input non contengono variabili in comune è possibile ignorare questa situazione. Di seguito viene riportato l'algoritmo di Robinson
+senza occurrence-check:
+
+\begin{algorithm}[H]
+  \caption{Algoritmo di unificazione di Robinson senza occurrence-check}
+  \KwSty{Firma:}{ unify($\tau_1, \tau_2$)}
+
+  \KwIn{$\tau_1, \tau_2$ due termini}
+  \KwOut{$\sigma$ un MGU di $\tau_1$ e $\tau_2$ o $\bot$ se non esiste}
+
+  $S :=$ Empty Stack of pair of terms\;
+  $\sigma := \text{Empty Substitution}$\;
+  \BlankLine
+  $S.push(\tau_1, \tau_2)$\;
+
+  \While{S is not Empty}{
+    $(\tau_1, \tau_2) := S.pop()$\;
+    \BlankLine
+    \While{$\tau_1 \: \text{is a variable} \land \tau_1 \neq \tau_1^\sigma$}{
+      $\tau_1 := \tau_1^\sigma$\;
+    }
+    \While{$\tau_2 \: \text{is a variable} \land \tau_2 \neq \tau_2^\sigma$}{
+      $\tau_2 := \tau_2^\sigma$\;
+    }\
+    \BlankLine
+
+    \If{$\tau_1 \neq \tau_2$}{
+      \Switch{$\tau_1 \tau_2$}{
+        \textbf{case} $\tau_1$ is a variable $x$ and $\tau_2$ is a variabile $y$ $\Rightarrow$ $\sigma := \sigma \cup \{x/y\}$\;
+        \textbf{case} $\tau_1$ is a variable $x$ $\Rightarrow$ $\sigma := \sigma \cup \{x/\tau_2\}$\;
+        \textbf{case} $\tau_2$ is a variable $y$ $\Rightarrow$ $\sigma := \sigma \cup \{y/\tau_1\}$\;
+        \textbf{case} $\tau_1 = f(s_1, ..., s_n)$ and $\tau_2 = f(t_1, ..., t_n)$ $\Rightarrow$ $S.push(s_1, t_1), ..., S.push(s_n, t_n)$\;
+        \textbf{case} $\tau_1 = f(s_1, ..., s_n)$ and $\tau_2 = g(t_1, ..., t_m)$ $\Rightarrow$ \Return{$\bot$}\;
+      }
+    }
+  }
+  \Return{$\sigma$}\;
+\end{algorithm}
+
+% ---------------------- END Unificazione ----------------------
+
+
 % ---------------------- Semantica ----------------------
 \subsection{Semantica}
+Si indica con $type : F' \rightarrow \Sigma_c \cup \Sigma_f \cup \Sigma_p$ la funzione che associa ogni formula $\varphi$ al suo \textit{tipo}, 
+cioè l'insieme di tutti i simboli non logici presenti nella formula (costanti, funzioni e predicati).
+Si definisce \textit{Modello} di un tipo $\Gamma$ una coppia $\mathcal{M} = (D, I)$ dove $D$ è un insieme non vuoto detto \textit{Dominio} e $I$ è una funzione: 
+$I: \Gamma \rightarrow D$ detta d'\textit{Interpretazione} che associa ogni simbolo non logico del tipo a un elemento del dominio in modo tale che per ogni simbolo non logico $s$:
 
+\begin{itemize}
+  \item Se $s$ è un simbolo di funzione n-aria allora $I(s)$ è una funzione $n$-aria su $D$: $I(s): D^n \rightarrow D$.
+  \item Se $s$ è un simbolo di predicato n-ario allora $I(s)$ è una relazione $n$-aria su $D$: $I(s) \subseteq D^n$.
+\end{itemize}
+
+Per l'interpretazioni delle costanti si assume che nel dominio siano presenti almeno due oggetti distinti $\{0, 1\} \in D$:
+\begin{itemize}
+  \item Se $s$ è un simbolo di costante allora $I(s) \in \{0, 1\}$
+  \item Se $s$ è $\top$ allora $I(s) = 1$
+  \item Se $s$ è $\bot$ allora $I(s) = 0$
+\end{itemize}
+
+Per semplicità di lettura, d'ora in poi l'applicazione della funzione $I$ ad un simbolo $s$ verrà indicata con $s^I$.
+Si definisce \textit{Contesto}, una qualunque mappatura $\gamma : \Sigma_x \rightarrow D$ che associa variabili a un elemento del dominio.
+Con la scrittura $\gamma[x/t]$ si indica il contesto ottenuto sostituendo il valore della variabile $x$ con l'elemento $t$.
+Ad esempio se $\gamma = \{x_1 \rightarrow a, x_2 \rightarrow b\}$ allora $\gamma[x_1/b] = \{x_1 \rightarrow b, x_2 \rightarrow b\}$.
+Per l'applicazione di un contesto a una variabile si utilizza la stessa notazione usata per le funzioni, ovvero $\gamma(x)$.
+Per l'esempio precedente $\gamma(x_1) = a$, $\gamma(x_2) = b$ e $\gamma[x_1/b](x_1) = b$.
+Se una variabile $x$ non è presente nel contesto allora si assume che $\gamma(x) = x$.
+Si definisce l'interpretazione di un termine o predicato $\tau$ nel contesto $\gamma$ secondo l'interpretazione $I$:
+
+\begin{itemize}
+  \item Se $\tau$ è una variabile $x$ allora $\tau^I_\gamma = \gamma(x)$
+  \item Se $\tau$ è una costante $c$ allora $\tau^I_\gamma = c^I$ (Le costanti non dipendono dal contesto)
+  \item Se $\tau$ è una funzione $f(\tau_1, ..., \tau_n)$ allora $\tau^I_\gamma = f^I({\tau_1}^I_\gamma, ..., {\tau_n}^I_\gamma)$
+  \item se $\tau$ è un predicato $p(\tau_1, ..., \tau_n)$ allora $\tau^I_\gamma = p^I({\tau_1}^I_\gamma, ..., {\tau_n}^I_\gamma)$
+\end{itemize}
+
+
+Data una formula del primo ordine $\varphi$ si dice che il modello $\mathcal{M}$ è appropriato per la formula $\varphi$ se e solo se il tipo della formula è contenuto nel tipo del modello.
+Un modello appropriato $\mathcal{M}$ soddisfa una formula $\varphi$ nel contesto $\gamma$ se e solo se:
+\begin{itemize}
+  \item Se $\varphi$ è una costante $c$ (o $\top$/$\bot$) allora $\mathcal{M}, \gamma \models c$ se e solo se $c^I = 1$
+  \item Se $\varphi$ è della forma $\lnot \psi$ (dove $\psi$ è una formula) allora $\mathcal{M}, \gamma \models \varphi$ se e solo se $\mathcal{M}, \gamma \not\models \psi$
+  \item Se $\varphi$ è della forma $(\psi \land \chi)$ (con $\psi$ e $\chi$ formule) allora $\mathcal{M}, \gamma \models \varphi$ se e solo se $\mathcal{M}, \gamma \models \psi$ e $\mathcal{M}, \gamma \models \chi$
+  \item Se $\varphi$ è della forma $(\psi \lor \chi)$ (con $\psi$ e $\chi$ formule) allora $\mathcal{M}, \gamma \models \varphi$ se e solo se $\mathcal{M}, \gamma \models \psi$ o $\mathcal{M}, \gamma \models \chi$
+  \item Se $\varphi$ è della forma $\forall x (\psi)$ (dove $\psi$ è una formula) allora $\mathcal{M}, \gamma \models \varphi$
+   se e solo se per ogni elemento $m \in D$ vale $\mathcal{M}, \gamma[x/m] \models \psi$
+  \item Se $\varphi$ è della forma $\exists x (\psi)$ (dove $\psi$ è una formula) allora $\mathcal{M}, \gamma \models \varphi$ se e solo se
+    esiste un elemento $m \in D$ tale che $\mathcal{M}, \gamma[x/m] \models \psi$
+  \item Infine se $\varphi$ è un letterale $p(\tau_1, ..., \tau_n)$ allora $\mathcal{M}, \gamma \models \varphi$ se e solo se $p^I({\tau_1}^I_\gamma, ..., {\tau_n}^I_\gamma)$
+\end{itemize}
+
+Data una formula $\varphi$ si dice che un modello $\mathcal{M}$ soddisfa $\varphi$ o anche che $\mathcal{M}$ 
+è un modello di $\varphi$ se e solo se $\mathcal{M}$ è appropriato per $\varphi$ e $\mathcal{M}, \gamma \models \varphi$ per ogni contesto $\gamma$,
+in notazione $\mathcal{M} \models \varphi$. Una formula è detta \textit{soddisfacibile} se esiste un modello che la soddisfa.
+Una formula è detta \textit{valida} se ogni modello la soddisfa.
+La relazione di conseguenza logica, equivalenza, equisoddisfacibilità e soundness sono definite in modo analogo alla logica proposizionale.
+
+
+Secondo questa semantica non vi è differenza nel significato tra enunciati del tipo $\forall x (\varphi)$ e formule $\varphi$,
+quindi da questo momento in poi ogni variabile libera presente in una formula verrà considerata come vincolata da un quantificatore universale posto all'inizio della formula.
+Un'altra osservazione interessante è che se nella formula sono presenti esclusivamente costanti e simboli logici allora il modello si comporta 
+esattamente come un'assegnazione proposizionale. È possibile estendere questa considerazione anche alle formule ground, ovvero formule senza variabili.
+Infatti se ogni predicato ground viene sostituito da un nuovo simbolo di costante allora la formula proposizionale risultante si comporterà, in termini di soddisfacibilità,
+esattamente come la formula originale. Ad esempio la formula ground $(p_1(c_1) \lor p_2(c_2, f_1(c_1))) \land \lnot p_1(c_1) \land c_2$ 
+è esattamente equivalente alla formula proposizionale $(c_3 \lor c_4) \land \lnot c_3 \land c_2$, nel senso che per ogni assegnamento proposizionale per la seconda formula
+esiste un modello per la prima e viceversa.
 
 % ---------------------- END Semantica ----------------------
 
@@ -362,9 +528,9 @@ in formato CNF. Le formule CNF per il primo ordine sono definite come segue:
 
 $$ \zeta_0 := \rho(\zeta_1) $$
 $$ \zeta_1 := \xi \mid (\xi \land \zeta_1) $$
-$$ \xi := \top \mid \bot \mid C \mid \lnot C \mid (\xi \lor \xi ) $$
+$$ \xi := \top \mid \bot \mid L \mid (\xi \lor \xi ) $$
 
-Dove $\rho$ è un prefisso di quantificatori universale. Per ottenere una formula CNF è sufficiente:
+Dove $\rho$ è un prefisso di quantificatori universale e $L$ un letterale. Per ottenere una formula CNF è sufficiente:
 
 \begin{enumerate}
   \item Normalizzare la formula in NNF
@@ -378,11 +544,13 @@ Dato che in una formula CNF tutte le variabili sono universalmente quantificate 
 Ad esempio, la formula CNF $\forall x_1 x_2 x_3 x_4 (\lnot p_1(x_1) \lor p_2(x_2) \lor p_3(x_3)) \land (\lnot p_4(x_4))$ può essere scritta come
 $(\lnot p_1(x_1) \lor p_2(x_2) \lor p_3(x_3)) \land (\lnot p_4(x_4))$ e quindi rappresentata
 in forma insiemistica come $\{\{\lnot p_1(x_1), p_2(x_2), p_3(x_3)\}, \{\lnot p_4(x_4)\}\}$.
+Un'osservazione interessante è che visto che tutte le variabili sono universalmente quantificate, è possibile rinominare le variabili di clausole diverse senza
+cambiare il significato della formula. È quindi possibile normalizzare le clausole in modo tale che ogni coppia di clausole contenga variabili diverse.
+Un caso d'uso tipico è quello di voler unificare due letterali di due clausole diverse. Con l'assunzione che le variabili siano tutte diverse è possibile
+applicare l'algoritmo di unificazione senza occurrence-check visto nel capitolo sull'Unificazione.
 
 % ---------------------- END Skolemizzazione e Forme Normali ----------------------
 
-
-\subsection{Unificazione}
 
 \section{Soddisfacibilità e Validità}
 \section{Resolution}
