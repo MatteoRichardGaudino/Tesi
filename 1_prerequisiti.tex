@@ -140,7 +140,7 @@ si ottiene così un implicante.
 % ---------------------- END Assegnamenti ----------------------
 
 % ---------------------- Forme Normali ----------------------
-\subsection{Forme Normali}
+\subsection{Forme Normali} \label{sec:forme_normali}
 Una delle strategie più utilizzate dai dimostratori di teoremi automatici è la \textit{normalizzazione} delle formule. Una \textit{forma normale}
 è essenzialmente un sottoinsieme di $F$ che rispetta determinate proprietà. Una \textit{normalizzazione} invece è il processo di trasformazione di una formula
 tramite una successione d'inferenze (corrette) in una forma normale.
@@ -197,13 +197,51 @@ genera esattamente $2^{n}$ clausole diverse tutte da $n$ letterali.
 
 % ---------------------- Naming ----------------------
 \subsection{Naming}
+Come già accennato il processo di normalizzazione di una formula può portare a una crescita esponenziale del numero di clausole generate.
+Si assuma ad esempio di voler clausificare una formula del tipo:
+
+$$ \varphi \lor \psi$$
+
+E che $\varphi$ e $\psi$ generino rispettivamente $n$ e $m$ clausole. Continuando a clausificare con l'algoritmo 
+descritto nel paragrafo \ref{sec:forme_normali}, si ottengono $n \cdot m$ clausole. 
+Questo perché la continua applicazione della proprietà distributiva porta a una duplicazione considerevole delle sottoformule.
+Una possibile tecnica di ottimizzazione è quella del \textit{Naming} anche detto \textit{Renamig}.
+In generale per \textit{Naming} si intende una qualunque tecnica di rinomina di letterali o sottoformule.
+In questo caso, per \textit{Naming} si intende la rinomina di sottoformule tramite l'aggiunta di un nuovo simbolo di costante.
+Per l'esempio precedente si assuma che $c_n$ sia un simbolo di costante non presente nella formula originale.
+Applicando il \textit{Naming} si ottiene la seguente formula:
+
+$$ (\varphi \lor c_n) \land (c_n \lor \psi)$$
+
+In questo modo, la clausificazione della formula genera solo $n + m$ clausole al costo dell'aggiunta di un nuovo simbolo di costante.
+Un discorso simile vale per formule con la doppia implicazione e lo xor, solo che in questo caso
+anche solo la normalizzazione in NNF può portare a una crescita esponenziale del numero di sottoformule.
+La trasformazione in NNF e poi in CNF della formula:
+
+$$ ((...((c_1 \Leftrightarrow c_2) \Leftrightarrow c_3) \Leftrightarrow ...) \Leftrightarrow c_n)$$
+
+Porta alla generazione di $2^{n-1}$ clausole. Nell'esempio particolare in cui $n=6$ si ottengono $32$ clausole ma con l'introduzione 
+di due nuovi nomie $c_7$ e $c_8$ è possibile ottenere la seguente formula:
+
+$$ (c_7 \Leftrightarrow (((c_1 \Leftrightarrow c_2) \Leftrightarrow c_3) \Leftrightarrow c_4)) $$
+$$ \land $$
+$$ (c_8 \Leftrightarrow (c_7 \Leftrightarrow c_5)) $$
+$$ \land $$
+$$ (c_8 \Leftrightarrow c_6) $$
+
+Che genera solo $22$ clausole.
+Il processo per stabilire quale sottoformula rinominare è un problema complesso. 
+Solitamente stabilisce un numero detto \textit{Threshold} (Soglia) che rappresenta il numero massimo di clausole che si è disposti a generare.
+Se una sottoformula genera un numero di clausole maggiore del Threshold, allora viene rinominata. 
+Ma anche questo è un discorso non banale e non verrà approfondito oltremodo in questo documento.
+In generale la nuova formula generata dal namig è equisoddisfacibile all'originale.
 
 % ---------------------- END Naming ----------------------
 
 \section{Logica del primo ordine}
   
 % ---------------------- Termini ----------------------
-\subsection{Termini e Formule}
+\subsection{Termini e Formule} \label{sec:sintassi_fof}
 Oltre al solito insieme $\Sigma_c$ di simboli di costante, vengono introdotti tre nuovi insiemi di simboli:
 \begin{itemize}
   \item $\Sigma_f = \{f_1, f_2, ...\}$ insieme di simboli di funzione
@@ -465,8 +503,20 @@ Una formula è detta \textit{valida} se ogni modello la soddisfa.
 La relazione di conseguenza logica, equivalenza, equisoddisfacibilità e soundness sono definite in modo analogo alla logica proposizionale.
 
 
-Secondo questa semantica non vi è differenza nel significato tra enunciati del tipo $\forall x (\varphi)$ e formule $\varphi$,
+Così come è stata posta questa semantica nessuna formula con variabili libere può avere un modello.
+Ad esempio se si considera una formula $\varphi$ con una variabile libera $x$ e si considera un modello $\mathcal{M}$ appropriato per $\varphi$,
+è sufficiente prendere un contesto vuoto $\gamma = \{\}$ per ottenere $\mathcal{M}, \gamma \not\models \varphi$.
+Per aggirare questa limitazione si estende la definizione di soddisfacibilità per formule con variabili libere.
+Dato un modello $\mathcal{M}$ appropriato ad una formula $\varphi$ si dice che $\mathcal{M}$ soddisfa $\varphi$ se e solo se
+\begin{itemize}
+  \item Se la formula non contiene variabili libere allora la definizione di soddisfacibilità rimane invariata.
+  \item Se $\varphi$ contiene variabili libere allora $\mathcal{M} \models \varphi$ se e solo se
+  per ogni contesto $\gamma$ che contiene tutte le variabili libere di $\varphi$ vale $\mathcal{M}, \gamma \models \varphi$.
+\end{itemize}
+
+Con questa modifica non vi è differenza nel significato tra enunciati del tipo $\forall x (\varphi)$ e formule $\varphi$,
 quindi da questo momento in poi ogni variabile libera presente in una formula verrà considerata come vincolata da un quantificatore universale posto all'inizio della formula.
+
 Un'altra osservazione interessante è che se nella formula sono presenti esclusivamente costanti e simboli logici allora il modello si comporta 
 esattamente come un'assegnazione proposizionale. È possibile estendere questa considerazione anche alle formule ground, ovvero formule senza variabili.
 Infatti se ogni predicato ground viene sostituito da un nuovo simbolo di costante allora la formula proposizionale risultante si comporterà, in termini di soddisfacibilità,
@@ -552,8 +602,102 @@ applicare l'algoritmo di unificazione senza occurrence-check visto nel capitolo 
 % ---------------------- END Skolemizzazione e Forme Normali ----------------------
 
 
-\section{Soddisfacibilità e Validità}
+\section{Soddisfacibilità e Validità} \label{sec:sat_val}
 \section{Resolution}
 \section{Il formato TPTP}
+In questa sezione verrà descritto il formato TPTP (Thousands of Problems for Theorem Provers) 
+per la rappresentazione di problemi di logica del primo ordine.
+TPTP è una nota libreria di problemi utilizzata per testare e valutare diversi ATP systems (Automatic Theorem Prover).
+TPTP fornisce diversi formati per la rappresentazione dei problemi,
+in questa sezione ci si soffermerà sui formati \textit{CNF} (Clausal Normal Form) e \textit{FOF} (First Order Formula).
+
+
+La traduzione dei predicati, termini e variabili è la stessa sia per il formato CNF che per il formato FOF.
+Ogni variabile è rappresentata da una stringa alfanumerica Maiuscola. 
+Simboli di funzione, predicato e costanti sono tutti rappresentati senza distinzione da stringhe alfanumeriche minuscole.
+Le regole della grammatica della generazione dei termini è esattamente la stessa vista nel paragrafo \ref{sec:sintassi_fof}.
+Per esempio il predicato $p_1(f_1(x_1), x_2, c_1)$ 
+può essere rappresentato come \texttt{p1(f1(X1), X2, c1)} o anche \texttt{pred(fun(VAR\_A), VAR\_B, costante)}.
+
+
+Per la traduzione dei simboli logici si utilizza la seguente mappatura:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|c|c|}
+    \hline
+    \textbf{Simbolo} & \textbf{Traduzione} \\
+    \hline
+    $\top$ & \texttt{\$true} \\
+    $\bot$ & \texttt{\$false} \\
+    $\lnot$ & \texttt{\~} \\
+    $\land$ & \texttt{\&} \\
+    $\lor$ & \texttt{|} \\
+    $\Rightarrow$ & \texttt{=>} \\
+    $\Leftrightarrow$ & \texttt{<=>} \\
+    $\oplus$ & \texttt{\url{<~>}} \\
+    $\forall$ & \texttt{!} \\
+    $\exists$ & \texttt{?} \\
+    \hline
+  \end{tabular}
+  \caption{Traduzione dei simboli logici}
+  \label{tab:traduzione_simboli_logici}
+\end{table}
+
+
+Anche le regole per la generazione delle formule sono le stesse viste nella sezione \ref{sec:sintassi_fof},
+con l'unica differenza che i simboli logici vengono tradotti secondo la tabella \ref{tab:traduzione_simboli_logici}.
+Le parentesi '(' e ')' possono essere omesse e in tal caso si segue il seguente ordine di valutazione dei simboli:
+\texttt{!}, \texttt{?}, \texttt{\textasciitilde}, \texttt{\&}, \texttt{|}, \texttt{<=>}, \texttt{=>}, \texttt{\url{<~>}}.
+Dopo un quantificatore (\texttt{!}/\texttt{?}) è necessaria la lista delle variabili quantificate racchiuse tra parentesi quadre '[' e ']' 
+seguite da ':' e la formula quantificata.
+Per esempio la formula $\forall x_1 x_2 \exists x_3 (p_1(x_1) \lor p_2(x_2) \lor p_3(x_3))$ viene 
+rappresentata come \texttt{![X1, X2] : (?[X3] : (p1(X1) | p2(X2) | p3(X3)))}.
+Se non presenti quantificatori nella formula le variabili libere vengono considerate quantificate universalmente.
+
+
+Il formato FOF prevede una lista di assiomi seguiti da una congettura. 
+Il formato cambia a seconda della domanda che si vuole porre all'ATP.
+Data una lista di assiomi $A_1, ..., A_n$ e una congettura $C$:
+
+\begin{itemize}
+  \item Se si da in input la lista di assiomi $A_1, ..., A_n$ l'ATP cerca di determinare la Soddisfacibilità della formula $A_1 \land ... \land A_n$.
+  \item Se vengono dati sia gli assiomi che la congettura l'ATP cerca di determinare se $A_1 \land ... \land A_n \Rightarrow C$ è valida.
+  \item Se invece viene data solo la congettura l'ATP cerca di determinare se $C$ è valida.
+\end{itemize}
+
+Il formato per inserire un assioma o la congettura è il seguente:
+
+\begin{center}
+  \texttt{fof(<nome>, <tipo>, <formula>).}
+\end{center}
+'Nome' è una stringa alfanumerica che identifica la formula, 'tipo' può essere \texttt{axiom} per gli assiomi e \texttt{conjecture} per la congettura.
+'Formula' è una formula del primo ordine in formato FOF. Ad esempio con il file di input:
+
+\begin{center}
+  \texttt{fof(ax1, axiom, p(X)).} \\
+  \texttt{fof(ax2, axiom, p(X) => q(X)).} \\
+  \texttt{fof(conj, conjecture, q(X)).} \\
+\end{center}
+
+L'ATP cercherà di determinare se la formula $(p(X) \land (p(X) \Rightarrow q(X))) \Rightarrow q(X)$ è valida.
+Per le formula CNF invece il formato è il seguente:
+
+\begin{center}
+  \texttt{cnf(<nome>, axiom, <clausola>).}
+\end{center}
+
+Dove 'nome' è definito come per il formato FOF e 'clausola' è una clausola del primo ordine.
+L'unico tipo consentito è \texttt{axiom} e non è possibile inserire una congettura.
+In questo formato ogni clausola deve essere scritta in un'annotazione separata.
+Ad esempio lo stesso problema dell'esempio precedente può essere posto all'ATP in questo modo:
+
+\begin{center}
+  \texttt{cnf(ax1, axiom, p(X)).} \\
+  \texttt{cnf(ax2, axiom, \url{~}p(X) | q(X)).} \\
+  \texttt{cnf(conj, axiom, \url{~}q(X)).} \\
+\end{center}
+
+
 
 \end{document}
