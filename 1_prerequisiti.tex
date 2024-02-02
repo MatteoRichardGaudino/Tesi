@@ -5,19 +5,30 @@
 \chapter{Logica e automazione dei problemi di Decisione}
 
 In questo capitolo verranno descritte le nozioni di base necessarie 
-per comprendere il lavoro svolto. 
+per comprendere il lavoro svolto in questa tesi. 
 In particolare, verranno introdotti i concetti di logica proposizionale e 
-del primo ordine, definita come estensione della prima. Nell'ultimo paragrafo del capitolo 
+del primo ordine, definita come estensione della prima.
+Verrà anche introdotto il problema della decisione, ovvero il problema di stabilire se una data formula è soddisfacibile o meno
+e le principali tecniche ad alto livello che vengono utilizzate dai theorem prover moderni per risolvere questo problema.
+Nell'ultimo paragrafo del capitolo 
 verrà descritto in che modo le formule di logica del 
 primo ordine possono essere rappresentate in un formato di file, per poi essere 
 processate come input da un theorem prover. 
-Lo scopo di questo capitolo è quello di accennare la teoria logica utilizzata nell'implementazione di vampire 
-e della procedura di decisione per i Binding-Fragments. Perciò, verranno date per scontate nozioni di teoria degli insiemi,
-algebra e teoria dei linguaggi.
+Lo scopo di questo capitolo è quindi quello di accennare la teoria logica utilizzata nell'implementazione di vampire 
+e della procedura di decisione per i Binding-Fragments.
+Non è tra gli obbiettivi dare una trattazione esaustiva sulla logica o in generale sulle varie teoria matematiche coinvolte, 
+perciò verranno date per scontate nozioni di teoria degli insiemi,
+algebra, teoria della computazione e teoria dei linguaggi.
 
 
 
 \section{Logica Proposizionale}
+
+La logica proposizionale è un ramo della logica formale che si occupa dello studio e della manipolazione delle proposizioni, 
+ovvero dichiarazioni che possono essere classificate come vere o false, ma non entrambe contemporaneamente (Principio di bivalenza).
+Essa fornisce un quadro formale per analizzare il ragionamento deduttivo basato su connettivi logici, come "e", "o", e "non".
+Questo strumento anche se incluso nella logica del primo ordine,
+rimane un pilastro fondamentale per lo studio svolto in questa tesi e quindi è necessario farne un'introduzione indipendente.
 
 % ---------------------- FORMULE ----------------------
 \subsection{Formule}
@@ -30,7 +41,7 @@ $$
 \varphi  := \top \mid \bot \mid C \mid \lnot \varphi \mid (\varphi \land \varphi) \mid (\varphi \lor \varphi)
 $$
 
-Dove $C \in \Sigma_c$ è un simbolo di costante. Con la funzione $const(\gamma) \rightarrow \Sigma_c$ si indica la funzione che
+Dove $C \in \Sigma_c$ è un simbolo di costante. Con la funzione $const(\gamma) \rightarrow 2^{\Sigma_c}$ si indica la funzione che
 associa a ogni formula $\gamma$ l'insieme dei suoi simboli di costante. 
 Viene chiamato \textit{Letterale}, ogni simbolo di costante $c$ o la sua negazione $\lnot c$.
 Vengono inoltre introdotti i seguenti simboli come abbreviazioni:
@@ -239,7 +250,16 @@ In generale la nuova formula generata dal namig è equisoddisfacibile all'origin
 % ---------------------- END Naming ----------------------
 
 \section{Logica del primo ordine}
-  
+
+La logica dei predicati rappresenta un'estensione della logica proposizionale, 
+ampliando il suo ambito per trattare in maniera più ricca e dettagliata le relazioni tra gli oggetti 
+e le proprietà delle entità coinvolte. Mentre la logica proposizionale si occupa di proposizioni atomiche, 
+la logica dei predicati introduce i predicati,
+che sono relazioni che sono vere o false a seconda dell'interpretazione e dalle variabili che contengono.
+Vengono generalizzati anche i connettivi logici $\land$ e $\lor$ tramite i quantificatori universali e esistenziali $\forall$ e $\exists$
+in modo da poter parlare di anche di insiemi di oggetti non finiti.
+
+
 % ---------------------- Termini ----------------------
 \subsection{Termini e Formule} \label{sec:sintassi_fof}
 Oltre al solito insieme $\Sigma_c$ di simboli di costante, vengono introdotti tre nuovi insiemi di simboli:
@@ -448,8 +468,7 @@ senza occurrence-check:
 
 % ---------------------- Semantica ----------------------
 \subsection{Semantica}
-Si indica con $type : F' \rightarrow \Sigma_c \cup \Sigma_f \cup \Sigma_p$ la funzione che associa ogni formula $\varphi$ al suo \textit{tipo}, 
-cioè l'insieme di tutti i simboli non logici presenti nella formula (costanti, funzioni e predicati).
+Si indica con \textit{tipo} di $\varphi$, l'insieme di tutti i simboli non logici presenti nella formula (costanti, funzioni e predicati).
 Si definisce \textit{Modello} di un tipo $\Gamma$ una coppia $\mathcal{M} = (D, I)$ dove $D$ è un insieme non vuoto detto \textit{Dominio} e $I$ è una funzione: 
 $I: \Gamma \rightarrow D$ detta d'\textit{Interpretazione} che associa ogni simbolo non logico del tipo a un elemento del dominio in modo tale che per ogni simbolo non logico $s$:
 
@@ -603,7 +622,169 @@ applicare l'algoritmo di unificazione senza occurrence-check visto nel capitolo 
 
 
 \section{Soddisfacibilità e Validità} \label{sec:sat_val}
-\section{Resolution}
+Nei precedenti capitoli si è data la definizione di soddisfacibilità e validità per formule proposizionali e del primo ordine.
+In questa sezione verrà approfondito il discorso e verranno introdotte alcune nozioni fondamentali per 
+capire il funzionamento di un \textit{ATP system} (Automatic Theorem Prover), nonché 
+per capire le motivazioni che hanno spinto la creazione di sistemi ATP e i vincoli teorici con cui si devono confrontare.
+
+
+Il problema della soddisfacibilità/validità è il problema di determinare 
+se una formula è soddisfacibile/valida o meno (Una tautologia nel caso della logica proposizionale).
+Sorge spontanea la domanda: È possibile creare una procedura che risolva questo problema?
+% La risposta è molto complessa e ha tenuto occupati logici e matematici per molti anni.
+
+In primo luogo è bene specificare che il problema della validità è riducibile al problema della soddisfacibilità.
+Si immagini di voler dimostrare che una formula $\varphi = (A_1 \land ... \land A_n) \Rightarrow C$ è valida.
+Nel caso fosse valida allora la sua negazione $A_1 \land ... \land A_n \land \lnot C$ sarebbe insoddisfacibile.
+Nel caso $\lnot \varphi$ fosse soddisfacibile allora esisterebbe
+ un modello $\mathcal{M}$ tale che $\mathcal{M} \models \lnot \varphi$ che quindi per definizione 
+$\mathcal{M} \not\models \varphi$. In tal caso $\varphi$ non è valida.
+In altre parole se un'implicazione è vera allora non è possibile che le premesse siano vere e la conclusione falsa.
+Tecniche dimostrative del genere sono dette di \textit{Refutazione} o prove per \textit{Assurdo}.
+Esistono anche altre tecniche dimostrative ma la quasi totalità degli ATP si basano sulla refutazione.
+
+
+Nel caso della logica proposizionale la risposta alla domanda precedente è affermativa, 
+anche se il problema è stato dimostrato essere \textit{NP-completo}. 
+Esistono vari algoritmi che risolvono il problema,
+il più semplice, basato su tavole di verità consiste in un algoritmo 
+brute-force che prova tutte le possibili assegnazioni di verità,  
+data una formula proposizionale di $n$ costanti esistono al massimo $2^n$ possibili assegnazioni 
+quindi è garantito che l'algoritmo termini e dia una risposta corretta.
+Un altro dei più famosi è l'algoritmo di Davis-Putnam basato sulla \textit{risoluzione} ma 
+tale tecnica verrà approfondita nella sezione dedicata \ref{sec:resolution}.
+Nel caso della logica del primo ordine la risposta è più complessa e la strada per arrivarci è lunga e a volte può sembrare anche contorta.
+
+
+Agli inizi del 900' il famoso matematico David Hilbert pubblicò un articolo in cui elencava 23 problemi matematici, all'epoca aperti,
+che avrebbero dovuto guidare la ricerca matematica del secolo successivo. Il secondo problema di Hilbert era il seguente:
+
+\begin{displayquote}
+  \textit{È possibile dimostrare la coerenza dell'insieme degli assiomi dell'aritmica?}
+\end{displayquote}
+
+La domanda di Hilbert si riferisce al sistema di assiomi dell'aritmetica proposti nei tre volumi di \textit{Principia Mathematica}
+di Bertrand Russell e Alfred North Whitehead.
+L'indagine del problema portò il suo risolutore, il logico Kurt Gödel, alla scoperta di due importanti risultati.
+
+Il primo risultato, detto \textit{Primo teorema di incompletezza} afferma che:
+
+\begin{displayquote}
+  \textit{In ogni sistema formale consistente che contiene un'aritmetica elementare, esiste una formula che non è dimostrabile in quel sistema.}
+\end{displayquote}
+
+Il secondo risultato, detto \textit{Secondo teorema di incompletezza} afferma che:
+
+\begin{displayquote}
+  \textit{Se un sistema formale consistente contiene un'aritmetica elementare, allora non può dimostrare la propria coerenza.}
+\end{displayquote}
+
+Per capire il senso dei due teoremi è necessario introdurre, anche se in maniera informale, i concetti di \textit{Teoria}, \textit{Teorema} e \textit{Sistema formale}.
+Un sistema formale è l'unione di questi quattro elementi:
+
+\begin{itemize}
+  \item Un alfabeto di simboli.
+  \item Delle regole per la generazione di stringhe dette formule.
+  \item Un insieme di assiomi.
+  \item Un insieme di regole sintattiche dette d'inferenza che associano formule ad altre formule.
+\end{itemize}
+
+Un \textit{Teorema} è un assioma o una qualunque formula che può essere ottenuta applicando un numero finito di volte le regole d'inferenza agli assiomi.
+Una derivazione sintattica di questo tipo è detta \textit{Dimostrazione} e si indica con $ A_1, ..., A_n \vdash C$
+dove $A_1, ..., A_n$ sono gli assiomi e $C$ è la formula derivata detta \textit{congettura}.
+Per coerenza si intende la proprietà che il sistema non possa dimostrare una contraddizione,
+ad esempio una formula del tipo $\psi \land \lnot \psi$.
+Una \textit{Teoria} è un insieme di formule che rispetta le seguenti proprietà:
+
+\begin{enumerate}
+  \item $\{A_1, ..., A_n\} \subseteq T$ (Contiene gli assiomi).
+  \item Se $A_1, ..., A_n \vdash C$ allora $C \in T$ (Ogni formula derivabile dagli assiomi è nella teoria).
+\end{enumerate}
+
+Anche tutto quello che si è visto finora sulla logica è possibile vederlo come un sistema formale.
+Si prendano ad esempio come assiomi le formule proposizionali $\{c_1, c_1 \Rightarrow c_2\}$ e come regola d'inferenza
+il \textit{Modus ponens}: $[\varphi, \varphi \Rightarrow \psi] \vdash \psi$. Si ottiene che la formula 
+$c_2$ è derivabile tramite gli assiomi e le regole d'inferenza.
+La teoria sarà composta dalle sole formule: $\{c_1, c_1 \Rightarrow c_2, c_2\}$.
+% Un sistema del genere è coerente e tutte le sue inferenze sono \textit{corrette} ma non è \textit{completo}.
+% La correttezza e la completezza sono due 
+
+
+Tornando ai \textit{Principia Mathematica} (\textit{PM}), per riferirsi al sistema formale che vi è contenuto si utilizzerà
+la notazione $\vdash_{PM} \varphi$ per indicare che la formula $\varphi$ è dimostrabile nel sistema formale \textit{PM} tramite i suoi assiomi
+e le sue regole di derivazione. La tesi di Gödel si basa sulla costruzione di una codifica delle formule e delle dimostrazioni
+di PM nello stesso linguaggio formale PM. 
+Ogni formula $\varphi$ viene quindi mappata in un numero naturale $\ulcorner  \varphi \urcorner $.
+In particolare riesce a formalizzare i predicati:
+\begin{itemize}
+  \item $Proof(x, y)$ che è vero se e solo se $x$ è la codifica di una dimostrazione di una formula codificata in $y$.
+  \item $Thm(x)$ che è vero sse esiste $y\in \mathbb{N} : Proof(y, x)$
+  \item $Cons$ che è vero sse il sistema è consistente. Si può anche dire che $Cons$ è vero sse $\lnot Thm(\ulcorner 0 = 1 \urcorner)$
+\end{itemize}
+
+
+Il cuore dei teoremi è una formula $\gamma$, chiamato \textit{enunciato gödeliano},
+che afferma di non essere dimostrabile in PM:
+
+$$\gamma := \gamma \Leftrightarrow \lnot Thm(\ulcorner \gamma \urcorner)$$
+
+Il primo teorema di incompletezza si può quindi riformulare in questo modo:
+\begin{enumerate}
+  \item[1.] Se PM (o un sistema simile) è coerente allora $\nvdash_{PM} \gamma$ e $\nvdash_{PM} \lnot\gamma$
+\end{enumerate}
+
+Il secondo teorema di incompletezza si può riformulare in questo modo:
+
+\begin{enumerate}
+  \item[2.] Se PM (o un sistema simile) è coerente allora $\nvdash_{PM} Cons$
+\end{enumerate}
+
+Si potrebbe fare un discorso molto lungo su cosa significhi \textit{'un sistema simile a PM'} ma 
+ciò richiederebbe una dettagliata esplorazione delle dimostrazioni dei teoremi di
+Gödel e un approfondimento nella Teoria della \textit{Computabilità}. Tuttavia, eviteremo di approfondire ulteriormente su questi argomenti.
+Non si approfondirà nemmeno il discorso sulla verità del predicato godeliano, verrà piuttosto lasciato 
+ai filosofi che, in relazione al paradosso del mentitore, dibattono sulla questione da oltre 2000 anni.
+
+In sintesi i teoremi di Gödel minano l'efficacia del lato sintattico di un sistema formale per dimostrare la verità di una formula
+ma non cita in nessun modo il lato semantico. Non è detto quindi che non sia possibile dimostrare la verità di una formula indecidibile
+utilizzando metodi semantici. Si prenda ad esempio il gioco del \textit{MU} dal libro \textit{Gödel, Escher, Bach} di Douglas Hofstadter.
+
+A chiudere il cerchio tra sistemi formali, aritmetica e logica arriva in aiuto il teorema di Church sull'indecidibilità 
+della logica del primo ordine:
+
+\newtheorem{theorem}{Teorema di Church}
+\begin{theorem}
+  La logica del primo ordine è indecidibile.
+\end{theorem}
+
+Il teorema di Church afferma che non esiste un algoritmo che, dato un qualunque enunciato $\varphi$ di una qualunque teoria $T$,
+determini se $\varphi$ è dimostrabile in $T$.
+La prova si basa sull'applicazione del primo teorema di incompletezza di Gödel al sistema formale \textit{Q}
+creato dal logico Raphael Robinson. 
+\textit{Q} è un sistema formale che contiene un'aritmetica elementare descritta da un numero finito di assiomi.
+Si assuma che $\{q_1, ..., q_n\}$ siano gli assiomi di \textit{Q} e $\varphi$ una qualunque formula.
+Se esistesse una procedura di decisione per la logica allora varrebbe:
+
+$$ q_1, ..., q_n \vdash \varphi \text{ se e solo se } \vdash (q_1 \land ... \land q_n) \Rightarrow \varphi$$
+
+Quindi esisterebbe una procedura di decisione anche per \textit{Q},
+ma in \textit{Q} vale il primo teorema di Gödel e quindi si giunge a una contraddizione visto che 
+si potrebbe provare il predicato godeliano, $\vdash_{Q} \gamma$ o $\vdash_Q \lnot\gamma$.
+Ciò discende anche dal fatto che il predicato $Thm$ è \textit{parzialmente calcolabile} ma non \textit{calcolabile},
+di conseguenza l'insieme che ha come funzione caratteristica $Thm$ è \textit{ricorsivamente enumerabile} ma non \textit{ricorsivo}.
+Quindi si può concludere dicendo che la logica del primo ordine è semidecidibile ma non decidibile.
+
+
+Il teorema di Church ha delle importanti conseguenze sui sistemi di dimostrazione automatica.
+Un ATP infatti può essere visto come un algoritmo di manipolazione sintattica che cerca di dimostrare la validità di una formula
+tramite un sistema di inferenze,
+ma il teorema di Church afferma che, per quanto sofisticato, esisteranno sempre degli input per cui l'algoritmo non terminerà.
+Questa limitazione rappresenta una barriera fondamentale nell'ambito della dimostrazione automatica 
+e sottolinea la necessità di considerare approcci misti o raffinamenti nelle strategie di dimostrazione.
+
+\section{Resolution} \label{sec:resolution}
+
+
 \section{Il formato TPTP}
 In questa sezione verrà descritto il formato TPTP (Thousands of Problems for Theorem Provers) 
 per la rappresentazione di problemi di logica del primo ordine.
