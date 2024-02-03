@@ -467,7 +467,7 @@ senza occurrence-check:
 
 
 % ---------------------- Semantica ----------------------
-\subsection{Semantica}
+\subsection{Semantica} \label{sec:semantica_fof}
 Si indica con \textit{tipo} di $\varphi$, l'insieme di tutti i simboli non logici presenti nella formula (costanti, funzioni e predicati).
 Si definisce \textit{Modello} di un tipo $\Gamma$ una coppia $\mathcal{M} = (D, I)$ dove $D$ è un insieme non vuoto detto \textit{Dominio} e $I$ è una funzione: 
 $I: \Gamma \rightarrow D$ detta d'\textit{Interpretazione} che associa ogni simbolo non logico del tipo a un elemento del dominio in modo tale che per ogni simbolo non logico $s$:
@@ -783,6 +783,80 @@ Questa limitazione rappresenta una barriera fondamentale nell'ambito della dimos
 e sottolinea la necessità di considerare approcci misti o raffinamenti nelle strategie di dimostrazione.
 
 \section{Resolution} \label{sec:resolution}
+\textit{Resolution} o \textit{Risoluzione} è una regola d'inferenza per logica proposizionale e del primo ordine.
+La regola per la logica proposizionale è la seguente:
+
+$$ \frac{\{L\} \cup C_1, \{\lnot L\} \cup C_1}{C_1 \cup C_2} $$
+
+Dove $C_1$ e $C_2$ sono clausole in notazione insiemistica e $L$ è un letterale. 
+La regola afferma che se si hanno due clausole dove una contiene un letterale e l'altra la sua negazione allora è possibile
+ottenere una nuova clausola che è l'unione delle due clausole senza il letterale e la sua negazione.
+Resolution è un'inferenza preserva la conseguenza logica e quindi è corretta. 
+Con il nome Resolution spesso ci si riferisce anche ad una classe di algoritmi che sfrutta questa regola come inferenza principale 
+per risolvere il problema della soddisfacibilità.
+Un famoso esempio di algoritmo per la logica proposizionale basato su Resolution è l'algoritmo di Davis-Putnam anche chiamato \textit{DPP} (Davis-Putnam-Procedure).
+La DPP in sintesi procede in questo modo:
+
+\begin{enumerate}
+  \item Si trasforma la formula una CNF equivalente
+  \item Si eliminano le clausole tautologiche
+  (Quelle che contengono sia un letterale che la sua negazione $l \lor \lnot l$).
+  \item Si sceglie un qualunque letterale $L$ da una qualunque clausola nella formula $\phi$ ottenuta nel punto precedente.
+  \item Si calcolano gli insiemi $S = \{C \in \phi \mid l \notin C \text{ e } \lnot l \notin C\}$ e $T = \phi \setminus S$.
+  \item Si calcola l'insieme 
+  $R = \{(C_1 \setminus \{L\}) \cup (C_2 \setminus \{\lnot L\}) \mid C_1, C_2 \in T \text{ e } L \in C_1 \text{ e } \lnot L \in C_2\}$, 
+  detto dei risolventi, applicando la regola di Resolution.
+  \item Si riapplica la procedura dal punto 2. con la nuova formula $\phi' = S \cup R$ finchè o $\phi' = \{\}$
+  o $\phi'$ contiene una clausola vuota.
+\end{enumerate}
+
+Se l'algoritmo termina con una clausola vuota vuol dire che nel passo precedente la formula conteneva due clausole del tipo $L \land \lnot L$,
+quindi la formula originale è insoddisfacibile. Se l'algoritmo termina con $\phi' = \{\}$ allora la formula originale è soddisfacibile.
+L'algoritmo seppur corretto è molto inefficiente e non viene utilizzato nella pratica, 
+ma è stato il primo basato su Resolution per il problema della soddisfacibilità. 
+I SAT solver (programmi che risolvono il problema della soddisfacibilità) si basano su tecniche più raffinate e spesso non sono bassati su Resolution.
+Un esempio è l'algoritmo \textit{DPLL} (Davis-Putnam-Logemann-Loveland) che si basa sulle tecniche di \textit{unit propagation} e \textit{pure literal elimination}.
+
+
+Per la logica del primo ordine, come al solito, il discorso è più complesso.
+I primi tentativi di creare un algoritmo per determinare la soddisfacibilità di una formula del primo ordine si
+devono ai risultati teorici dei logici 
+Skolem, J. Herbrand e R. Robinson. 
+I risultati di Herbrand permettono di 'ridurre' il problema della soddisfacibilità di formule universalmente quantificate
+al problema della soddisfacibilità di una formula proposizionale. La strategia si basa sulla creazione di un modello 
+il quale dominio, detto universo di Herbrand, è generato da tutti i termini ground ottenibili dai termini della formula originale.
+L'universo di Herbrand è un insieme finito (se la formula non contiene funzioni) o infinito numerabile. Il secondo passo è 
+chiamato istanziazione ground e consiste nel sostituire tutte le variabili con un sottoinsieme finito di elementi dell'universo di Herbrand.
+Si ottiene così una formula ground che, come descritto in \ref{sec:semantica_fof}, può essere trasformata in una formula proposizionale e risolta da un Sat Solver. 
+Se il Sat solver trova un'assegnazione che soddisfa la formula allora si sceglie un altro sottoinsieme finito diverso dal precedente dell'universo di Herbrand 
+e si ripete il procedimento. Se il Sat solver non trova un'assegnazione allora la formula originale è insoddisfacibile.
+Se si verificano tutti i sottoinsiemi finiti dell'universo di Herbrand senza trovare formule insoddisfacibili allora la formula originale è soddisfacibile.
+
+È chiaro che la strategia di Herbrand è più un risultato teorico che un metodo pratico.
+L'unico caso in cui è garantita la terminazione è quando la formula non contiene funzioni
+e quindi l'universo di Herbrand è finito, così come il numero di tutti i sui sottoinsiemi.
+I primi algoritmi utilizzabili nella pratica iniziarono a nascere dopo che Robinson introdusse la regola di risoluzione per la logica del primo ordine:
+
+$$ \frac{\{L(\tau_1, ..., \tau_n)\} \cup C_1, \{\lnot L(\omega_1, ..., \omega_n)\} \cup C_1}{(C_1 \cup C_2)^\sigma} $$
+
+Dove $\sigma$ è un unificatore dei due letterali $L(\tau_1, ..., \tau_n)$ e $L(\omega_1, ..., \omega_n)$ e $C_1, C_2$ sono clausole.
+Anche per la logica del primo ordine la regola di risoluzione è corretta e preserva la conseguenza logica.
+Da qui vi è un punto di svolta nello sviluppo degli ATP.
+Il primo ATP ad alte prestazioni basato su Resolution per la logica del primo ordine fu \textit{Otter} sviluppato da William McCune.
+Otter fa parte di una classe di theorem prover basati sulla \textit{Saturazione}.
+La saturazione è una tecnica concettualmente molto semplice che consiste nel generare 
+tutte le clausole possibili a partire da un insieme di clausole iniziali.
+Se la formula è insoddisfacibile allora prima o poi verrà generata una clausola vuota.
+Se la formula è soddisfacibile allora vi sono due casi possibili.
+Nel primo caso l'algoritmo genera tutte le clausole generabili (satura il sistema) e l'algoritmo termina.
+Nel secondo caso il numero di clausole generabili dal sistema iniziale non è un numero finito.
+In tal caso o l'algoritmo capisce che alcune aree di ricerca non porteranno mai alla generazione 
+di una clausola vuota e quindi termina,
+oppure, nell'ipotesi peggiore, l'algoritmo non termina mai rimanendo in un loop infinito.
+Quest'ultima è una conseguenza inevitabile dei teoremi di Church e Gödel.
+Una descrizione più dettagliata di Otter verrà data nel capitolo \ref{chap:vampire} sull'implementazione di Vampire.
+
+
 
 
 \section{Il formato TPTP}

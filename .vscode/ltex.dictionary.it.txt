@@ -1,0 +1,7 @@
+Resolution
+Soddisfacibilità
+Skolemizzazione
+soddisfacibilità
+Herbrand
+ground
+Binding

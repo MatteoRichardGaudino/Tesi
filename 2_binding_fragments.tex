@@ -2,8 +2,24 @@
 
 \begin{document}
 \chapter{Algoritmo di decisione di Frammenti Binding}
-% Descrizione dei binding fragments, delle loro caratteristiche e delle loro proprietà. 
-\section{Classificazione}
+Come evidenziato nella sezione \ref{sec:sat_val}, 
+sono stati esaminati i teoremi di Gödel e Church, mentre nella sezione \ref{sec:resolution} sono state approfondite le loro implicazioni. 
+La logica del primo ordine è intrinsecamente indecidibile; tuttavia, 
+è possibile identificare alcune sue componenti che risultano decidibili.
+Queste componenti sono dette \textit{Frammenti} della logica del primo ordine.
+Si pensi ad esempio ai teoremi di Herbrand citati nella sezione \ref{sec:resolution}.
+Se una formula non contiene funzioni ed è universalmente quantificata allora l'universo di Herbrand è finito e 
+vi sono un numero finito di possibili instanziazioni ground. 
+In questo caso determinare la soddisfacibilità di una formula di questo tipo
+è riducibie al problema della soddisfacibilità proposizionale che è notoriamente decidibile.
+In letteratura questo frammento è noto come \textit{Bernays–Schönfinkel Fragment}.
+Altre esempi di frammenti decidibili sono il \textit{Monadic Fragment}, 
+il \textit{Two-variable Fragment}, \textit{Unary negation fragment} e il \textit{Guarded Fragment}.
+In questo capitolo verrà descritta una famiglia di frammenti relativamente recente chiamata \textit{Binding Fragments}.
+
+
+
+\section{Tassonomia dei Frammenti Binding}
 \section{Algoritmo Astratto}
 
 \end{document}
