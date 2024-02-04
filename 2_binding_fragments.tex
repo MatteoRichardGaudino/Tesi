@@ -2,12 +2,13 @@
 
 \begin{document}
 \chapter{Algoritmo di decisione di Frammenti Binding}
-Come evidenziato nella sezione \ref{sec:sat_val}, 
-sono stati esaminati i teoremi di Gödel e Church, mentre nella sezione \ref{sec:resolution} sono state approfondite le loro implicazioni. 
+Nella sezione \ref{sec:sat_val}, 
+sono stati esaminati i teoremi di Gödel e Church, 
+mentre nella sezione \ref{sec:resolution} sono state viste alcune delle loro conseguenze. 
 La logica del primo ordine è intrinsecamente indecidibile; tuttavia, 
 è possibile identificare alcune sue componenti che risultano decidibili.
 Queste componenti sono dette \textit{Frammenti} della logica del primo ordine.
-Si pensi ad esempio ai teoremi di Herbrand citati nella sezione \ref{sec:resolution}.
+Si pensi ad esempio ai risultati di Herbrand citati nella sezione \ref{sec:resolution}.
 Se una formula non contiene funzioni ed è universalmente quantificata allora l'universo di Herbrand è finito e 
 vi sono un numero finito di possibili instanziazioni ground. 
 In questo caso determinare la soddisfacibilità di una formula di questo tipo
@@ -17,9 +18,147 @@ Altre esempi di frammenti decidibili sono il \textit{Monadic Fragment},
 il \textit{Two-variable Fragment}, \textit{Unary negation fragment} e il \textit{Guarded Fragment}.
 In questo capitolo verrà descritta una famiglia di frammenti relativamente recente chiamata \textit{Binding Fragments}.
 
-
-
 \section{Tassonomia dei Frammenti Binding}
-\section{Algoritmo Astratto}
+Si dice che una formula del primo ordine appartiene alla classe \textit{Boolean Binding} (BB) se generata dalla seguente grammatica:
+
+$$ \varphi :=  \top \mid \bot \mid (\varphi \lor \varphi) \mid (\varphi \land \varphi) \mid \mathcal{P}(\psi) $$
+$$ \psi := \rho \mid (\psi \lor \psi) \mid (\psi \land \psi) $$
+
+Dove $\mathcal{P}$ è un prefisso di quantificatori e $\rho$ è una combinazione booleana di letterali che hanno come argomento 
+tutti la stessa lista di termini. 
+Una formula di questo tipo verrà chiamata con il nome $\tau$-Binding, dove $\tau$ indica la lista di termini comune.
+Ad esempio sono $(f_1(x_1), c_2)$-Binding le formule: 
+$p_1(f_1(x_1), c_2)$, $p_1(f_1(x_1), c_2) \lor \lnot p_3(f_1(x_1), c_2)$.
+Per semplicità di scrittura è possibile omettere la lista di termini comune e posizionarla in notazione postfissa:
+
+$$p_1(f_1(x_1), c_2) \lor \lnot p_3(f_1(x_1), c_2) \text{ diventa } (p_1 \lor \lnot p_3)(f_1(x_1), c_2)$$
+
+Con $\mathcal{B}^\tau$ verrà indicato l'insieme di tutte le formule $\tau$-Binding.
+Si definisce la funzione $term: \mathcal{B}^\tau \rightarrow T^n$ 
+che associa ogni $\tau$-Binding alla sua lista di termini comune $\tau$.
+Ad esempio $term((p_1 \lor \lnot p_3)(f_1(x_1), c_2)) = (f_1(x_1), c_2)$.
+
+
+I frammenti Binding possono essere ottenuti restringendo le regole di $\psi$:
+
+\begin{itemize}
+    \item Il frammento \textit{One Binding} (1B) viene ottenuto restringendo la seconda formula 
+    a $\psi := \rho$
+    \item Il frammento \textit{Conjunctive Binding} (CB o $\land$B) viene ottenuto restringendo la seconda formula 
+a $\psi := \rho \mid (\psi \land \psi)$
+    \item Il frammento \textit{Disjunctive Binding} (DB o $\lor$B) viene ottenuto restringendo la seconda formula 
+    a $\psi := \rho \mid (\psi \lor \psi)$
+\end{itemize}
+
+Un'istanza particolare del frammento 1B è quando la formula non contiene quantificatori esistenziali.
+Una formula 1B con soli prefissi universali viene detta del frammento \textit{Universal One Binding} ($\forall 1B$).
+
+% TODO qualche esempio sui grafi e i database
+
+
+% ----------------------------------- Soddisfacibilità -----------------------------------
+\section{Soddisfacibilità dei frammenti Binding}
+In questa sezione verrà analizzato il problema della soddisfacibilità dei frammenti binding.
+In particolare verrà descritto l'algoritmo di decisione per i frammenti 1B e CB che è il soggetto principale dello studio di questa tesi.
+
+Data una formula del frammento 1B è facile osservare che il processo di skolemizzazione
+converte la formula in formato $\forall 1B$. 
+Se si applica la stessa procedura ad una formula CB, le sottoformule generate dalla regola $\psi$ saranno del tipo:
+$\mathcal{P} (\rho_1 \land ... \land \rho_n)$ con $\mathcal{P}$ un prefisso universale e $(\rho_1 \land ... \land \rho_n)$
+$\tau$-Binding. In questo caso è possibile distribuire il '$\forall$' sui vari $\tau$-Binding e si ottiene così una formula 
+equisoddisfacibile in formato $\forall$1B.
+
+
+
+\newtheorem{thm}{Teorema: Decidibilità dei frammenti 1B e CB}[section]
+\begin{thm}
+    I frammenti 1B e CB sono frammenti decidibili del primo ordine.
+\end{thm}
+
+Una dimostrazione dettagliata di questo teorema può essere trovata nell'articolo [TODO da citare].
+Si può osservare che il processo di clausificazione del primo ordine porta alla generazione di una formula equisoddisfacibile
+che rispetta il formato DB. Ne consegue immediatamente per il teorema di Church:
+
+\newtheorem{db}[thm]{Teorema: Indecidibilità del frammento Disjunctive Binding}
+\begin{db}
+    Il frammento DB è un frammento indecidibile del primo ordine.
+\end{db}
+
+\begin{proof}
+Per assurdo Esiste un algoritmo di decisione totale $S$ per formule del frammento DB. Data una qualunque formula
+$\varphi$ è possibile trasformarla in una equisoddisfacibile in formato CNF. Se si distribuisce il quantificatore 
+universale sulle clausole si ottiene una formula $\varphi'$ che rispetta
+i requisiti sintattici del frammento DB. $S$ è quindi una procedura di decisione totale per tutta la logica 
+del primo ordine ma ciò è in contraddizione con il teorema di Church.
+\end{proof}
+
+
+Il processo di skolemizzazione consente di concentrarsi sullo studio del frammento $\forall$1B
+per la risoluzione del problema della soddisfacibilità. 
+Prima di descrivere l'algoritmo bisogna introdurre tre nuovi concetti:
+L'Unificazione per $\tau$-Binding, Implicante di una formula del primo ordine e la conversione booleana di un $\tau$-Binding.
+Data una formula del primo ordine $\varphi$ per Implicante di $\varphi$ si intende la conversione del primo ordine di
+un implicante della 'struttura proposizionale esterna'.
+ad esempio la formula
+$\forall x_1 (p_1(x_1) \lor p_2(x_1)) \land (p_1(c_1) \lor \exists x_2 (p_3(x_2))) \land \lnot p_1(c_1) \land \exists x_2 (p_3(x_2))$
+ha la seguente struttura booleana  $c_1 \land (c_2 \lor c_3) \land \lnot c_2 \land c_3$.
+Un implicante (e anche il solo) di questa formula è l'insieme $\{c_1, c_3\}$ che ri-convertito nel primo ordine diventa
+l'insieme $\{\forall x_1 (p_1(x_1) \lor p_2(x_1)), \exists x_2 (p_3(x_2))\}$.
+In questo caso è stata creata implicitamente un bi-mappa tra costanti proposizionali e formule del primo ordine:
+\begin{itemize}
+    \item $c_1 \rightleftarrows \forall x_1 (p_1(x_1) \lor p_2(x_1))$
+    \item $c_2 \rightleftarrows p_1(c_1)$
+    \item $c_3 \rightleftarrows \exists x_2 (p_3(x_2))$
+\end{itemize}
+Un $\tau_1$-Biding e un $\tau_2$-Biding sono detti unificabili se e solo se l'insieme congiunto di tutti i loro letterali è unificabile.
+Si può anche dire che sono unificabili sse 
+le due liste $\tau_1$ e $\tau_2$ hanno la stessa lunghezza $n$ e dato un qualunque predicato $p$ $n$-ario
+$p(\tau_1)$ e $p(\tau_2)$ sono unificabili. 
+Una insieme di $\tau$-Biding è unificabile sse esiste una sostituzione che unifica a due a due tutti gli elementi dell'insieme.
+Dato un $\tau$-Binding $\phi$ la sua conversione booleana $bool(\phi)$ è una formula proposizionale che si ottiene 
+da $\phi$ mantenendo la sua struttura proposizionale, eliminando gli argomenti dai letterali e convertendo
+i simboli di predicato in simboli di costante con lo stesso indice. Ad esempio il $\tau$-Binding
+$((p_1 \land p_4) \lor p_2 \lor \lnot p_4)(\tau)$ viene convertito nella seguente formula proposizionale $(c_1 \land c_4) \lor c_2 \lor \lnot c_4$
+
+A questo punto è possibile enunciare il teorema di caratterizzazione della soddisfacibilità del frammento $\forall$1B.
+
+\newtheorem{forall1bsat}[thm]{Teorema: Caratterizzazione della soddisfacibilità per il frammento $\forall$1B}
+\begin{forall1bsat}
+    Data una formula $\varphi$ del frammento $\forall$1B, $\varphi$ è soddisfacibile se e solo se: \\
+    Esiste un implicante $I$ dove: per ogni sottoinsieme $U \subseteq I$ di $\tau$-Binding,
+    se $U=\{\gamma_1, ..., \gamma_n\}$ è unificabile allora la formula proposizionale $bool(\gamma_1) \land ... \land bool(\gamma_n)$ è soddisfacibile.
+\end{forall1bsat}
+
+Dal teorema appena descritto si estrapola intuitivamente l'algoritmo per la soddisfacibilità delle formule del frammento:
+
+\begin{algorithm}[H]
+    \caption{Algoritmo per la soddisfacibilità del frammento $\forall$1B}
+    \KwSty{Firma:}{ oneBindingAlgorithm($\varphi$)}
+  
+    \KwIn{$\varphi$ una formula $\forall$1B}
+    \KwOut{$\top$ o $\bot$}
+
+    \ForEach{$I$ Implicant of $\varphi$}{
+        $res := \top$\;
+        \ForEach{$U \subseteq I$}{
+            \If{$U$ is unifiable}{
+                \If{$bool(\gamma_1) \land ... \land bool(\gamma_n)$ is not satisfiable}{
+                    $res := \bot$
+                    \textbf{Break}\;
+                }
+            }
+        }
+        \If{$res = \top$}{
+            \Return{$\top$}
+        }
+    }
+    
+
+    \Return{$\bot$}
+
+  \end{algorithm}
+
+
+
 
 \end{document}
