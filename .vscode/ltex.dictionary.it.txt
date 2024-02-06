@@ -5,3 +5,4 @@ soddisfacibilità
 Herbrand
 ground
 Binding
+Gödel

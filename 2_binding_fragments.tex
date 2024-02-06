@@ -27,16 +27,18 @@ $$ \psi := \rho \mid (\psi \lor \psi) \mid (\psi \land \psi) $$
 Dove $\mathcal{P}$ è un prefisso di quantificatori e $\rho$ è una combinazione booleana di letterali che hanno come argomento 
 tutti la stessa lista di termini. 
 Una formula di questo tipo verrà chiamata con il nome $\tau$-Binding, dove $\tau$ indica la lista di termini comune.
-Ad esempio sono $(f_1(x_1), c_2)$-Binding le formule: 
-$p_1(f_1(x_1), c_2)$, $p_1(f_1(x_1), c_2) \lor \lnot p_3(f_1(x_1), c_2)$.
+Ad esempio sono $(f_1(x_1), f_2)$-Binding le formule: 
+$p_1(f_1(x_1), f_2)$, $p_1(f_1(x_1), f_2) \lor \lnot p_3(f_1(x_1), f_2)$.
 Per semplicità di scrittura è possibile omettere la lista di termini comune e posizionarla in notazione postfissa:
 
-$$p_1(f_1(x_1), c_2) \lor \lnot p_3(f_1(x_1), c_2) \text{ diventa } (p_1 \lor \lnot p_3)(f_1(x_1), c_2)$$
+$$p_1(f_1(x_1), f_2) \lor \lnot p_3(f_1(x_1), f_2) \text{ diventa } (p_1 \lor \lnot p_3)(f_1(x_1), f_2)$$
 
 Con $\mathcal{B}^\tau$ verrà indicato l'insieme di tutte le formule $\tau$-Binding.
 Si definisce la funzione $term: \mathcal{B}^\tau \rightarrow T^n$ 
 che associa ogni $\tau$-Binding alla sua lista di termini comune $\tau$.
-Ad esempio $term((p_1 \lor \lnot p_3)(f_1(x_1), c_2)) = (f_1(x_1), c_2)$.
+Ad esempio $term((p_1 \lor \lnot p_3)(f_1(x_1), f_2)) = (f_1(x_1), f_2)$.
+Verranno chiamati impropriamente $\tau$-Binding anche formule universalmente quantificate la cui matrice è un $\tau$-Binding.
+In questo caso ci si riferisce esclusivamente alla matrice della formula eliminando i quantificatori.
 
 
 I frammenti Binding possono essere ottenuti restringendo le regole di $\psi$:
@@ -100,15 +102,15 @@ L'Unificazione per $\tau$-Binding, Implicante di una formula del primo ordine e 
 Data una formula del primo ordine $\varphi$ per Implicante di $\varphi$ si intende la conversione del primo ordine di
 un implicante della 'struttura proposizionale esterna'.
 ad esempio la formula
-$\forall x_1 (p_1(x_1) \lor p_2(x_1)) \land (p_1(c_1) \lor \exists x_2 (p_3(x_2))) \land \lnot p_1(c_1) \land \exists x_2 (p_3(x_2))$
-ha la seguente struttura booleana  $c_1 \land (c_2 \lor c_3) \land \lnot c_2 \land c_3$.
-Un implicante (e anche il solo) di questa formula è l'insieme $\{c_1, c_3\}$ che ri-convertito nel primo ordine diventa
+$\forall x_1 (p_1(x_1) \lor p_2(x_1)) \land (p_1(f_1) \lor \exists x_2 (p_3(x_2))) \land \lnot p_1(f_1) \land \exists x_2 (p_3(x_2))$
+ha la seguente struttura booleana  $s_1 \land (s_2 \lor s_3) \land \lnot s_2 \land s_3$.
+Un implicante (e anche il solo) di questa formula è l'insieme $\{s_1, s_3\}$ che ri-convertito nel primo ordine diventa
 l'insieme $\{\forall x_1 (p_1(x_1) \lor p_2(x_1)), \exists x_2 (p_3(x_2))\}$.
 In questo caso è stata creata implicitamente un bi-mappa tra costanti proposizionali e formule del primo ordine:
 \begin{itemize}
-    \item $c_1 \rightleftarrows \forall x_1 (p_1(x_1) \lor p_2(x_1))$
-    \item $c_2 \rightleftarrows p_1(c_1)$
-    \item $c_3 \rightleftarrows \exists x_2 (p_3(x_2))$
+    \item $s_1 \rightleftarrows \forall x_1 (p_1(x_1) \lor p_2(x_1))$
+    \item $s_2 \rightleftarrows p_1(f_1)$
+    \item $s_3 \rightleftarrows \exists x_2 (p_3(x_2))$
 \end{itemize}
 Un $\tau_1$-Biding e un $\tau_2$-Biding sono detti unificabili se e solo se l'insieme congiunto di tutti i loro letterali è unificabile.
 Si può anche dire che sono unificabili sse 
@@ -118,7 +120,7 @@ Una insieme di $\tau$-Biding è unificabile sse esiste una sostituzione che unif
 Dato un $\tau$-Binding $\phi$ la sua conversione booleana $bool(\phi)$ è una formula proposizionale che si ottiene 
 da $\phi$ mantenendo la sua struttura proposizionale, eliminando gli argomenti dai letterali e convertendo
 i simboli di predicato in simboli di costante con lo stesso indice. Ad esempio il $\tau$-Binding
-$((p_1 \land p_4) \lor p_2 \lor \lnot p_4)(\tau)$ viene convertito nella seguente formula proposizionale $(c_1 \land c_4) \lor c_2 \lor \lnot c_4$
+$((p_1 \land p_4) \lor p_2 \lor \lnot p_4)(\tau)$ viene convertito nella seguente formula proposizionale $(s_1 \land s_4) \lor s_2 \lor \lnot s_4$
 
 A questo punto è possibile enunciare il teorema di caratterizzazione della soddisfacibilità del frammento $\forall$1B.
 
@@ -140,10 +142,10 @@ Dal teorema appena descritto si estrapola intuitivamente l'algoritmo per la sodd
 
     \ForEach{$I$ Implicant of $\varphi$}{
         $res := \top$\;
-        \ForEach{$U \subseteq I$}{
+        \ForEach{$(U := \{\gamma_1, ..., \gamma_n\}) \subseteq I$}{
             \If{$U$ is unifiable}{
                 \If{$bool(\gamma_1) \land ... \land bool(\gamma_n)$ is not satisfiable}{
-                    $res := \bot$
+                    $res := \bot$\;
                     \textbf{Break}\;
                 }
             }
@@ -152,11 +154,11 @@ Dal teorema appena descritto si estrapola intuitivamente l'algoritmo per la sodd
             \Return{$\top$}
         }
     }
-    
-
     \Return{$\bot$}
-
   \end{algorithm}
+
+I prossimi capitoli si concentreranno sullo studio dei dettagli tecnici per l'implementazione di questo algoritmo,
+con annesse osservazioni sulle sfide implementative e una analisi dei risultati sperimentali ottenuti.
 
 
 

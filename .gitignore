@@ -32,3 +32,5 @@ main.log
 main.synctex.gz
 main.toc
 2_binding_fragments.synctex.gz
+out/aux/main.bbl
+out/aux/main.blg
