@@ -21,6 +21,7 @@
                 "-pdf",
                 "-aux-directory=out/aux",
                 "-output-directory=out",
+                "-shell-escape",
                 "%DOC%"
             ]
         },
@@ -33,6 +34,7 @@
                 "-file-line-error",
                 "-aux-directory=out",
                 "-output-directory=out",
+                "-shell-escape",
                 "%DOC%"
             ]
         }

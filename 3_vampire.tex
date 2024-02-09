@@ -1,17 +1,183 @@
 \documentclass[./main.tex]{subfiles}
 
+
+
 \begin{document}
 \chapter{Il Theorem prover Vampire} \label{chap:vampire}
-% Descrizione di vampire, dei suoi componenti e delle sue funzionalità, la refutazione e la saturazione.
-% Le strutture dati principali in relazione a quanto descritto nel capitolo precedente.
+\textit{Vampire} \cite{vampire1} \cite{vampire2} \cite{vampireWebsite} è un dimostratore di teoremi automatico
+per la logica del primo ordine basato sulle regole di \textit{Resolution} e \textit{Paramodulation}.
+Nasce nel 1998 come progetto di ricerca degli autori Andrei Voronkov e Alexandre Riazanov,
+adesso è correntemente mantenuto e sviluppato da un team più ampio presso il dipartimento di Computer Science dell'Università di Manchester. 
+Il software è open-source, sviluppato in C++ e al momento della scrittura di questa tesi è giunto alla versione 4.8 con licenza BSD-3.
+Vampire incorpora un complesso sistema strutture dati, algoritmi per la manipolazione di formule e termini e un vasto sistema di inferenze.
+Uno dei suoi punti di forza è l'efficienza, Il team di sviluppo infatti partecipa annualmente al \textit{CASC} (The CADE ATP System Competition),
+una competizione tra sistemi ATP, e fino ad ora ha sempre vinto almeno in una categoria ogni anno.
+Questa ambizione per l'efficienza ha influenzato molto la struttura di Vampire e la sua implementazione.
+Questo è sia un lato positivo che negativo, infatti se da un lato ci si ritrova con funzioni efficienti e ben ottimizzate,
+dall'altro lato ci si ritrova spesso con un codice complesso e difficile da comprendere che predilige la velocità alla pulizia.
+Ogni suo componente è riconducibile ad un articolo che ne spiega il funzionamento ad alto livello ma spesso
+alcune scelte implementative sono poco o per nulla documentate. 
+Spesso lo stesso nome di una funzione o di una classe fa intuire il suo scopo e funzionamento ma 
+non sempre è così e altrettanto spesso si è costretti a fare 'Reverse Engineering' del codice sorgente per capire come è stato utilizzato in altri contesti.
+Questo è un problema di cui il team di sviluppo è consapevole e negli ultimi anni sta cercando di migliorare.
+\begin{figure}[ht]
+    \centering
+    \includesvg{images/3_vampire/vampire_cartelle.svg}
+    \caption{Struttura delle cartelle di Vampire.}
+    \label{fig:vampire_cartelle}
+\end{figure}
+In questo capitolo si cercherà di dare una panoramica generale di Vampire, spiegando le sue componenti principali e come queste interagiscono tra di loro,
+con un focus particolare su quelle che sono state utilizzate per la realizzazione della procedura di decisione per frammenti Binding.
+Nella figura \ref{fig:vampire_cartelle} è mostrata la disposizione delle cartelle di Vampire.
+La struttura è molto piatta ma assolutamente organizzata.
+Nella cartella \textit{Kernel} sono presenti le componenti principali del sistema come ad esempio le strutture per le formule e i termini,
+e il 'Main Loop' del programma che si occupa di gestire il processso di dimostrazione.
+La struttura delle formule verrà trattata nella sezione \ref{sec:vampire_term}.
+Nella cartella \textit{Lib} sono presenti le strutture dati e le funzioni di utilità come Array, Mappe, Liste, Stack, ecc.
+Nella cartella \textit{Parse} sono presenti le classi che decodificano 
+i file TPTP. 
+Nella cartella \textit{Shell} sono presenti le classi per la gestione dell'input/output da riga di comando
+e tutte le funzioni necessarie per il Preprocessing.
+Gli step del preprocessing verranno approfonditi nella sezione \ref{sec:vampire_preprocessing}.
+Nella cartella \textit{Indexing} sono presenti i componenti per l'indicizzazione dei termini.
+Le particolari strutture per l'unificazione verranno trattate nella sezione \ref{sec:vampire_unification}.
+Nelle cartelle \textit{Inferences} e \textit{Saturation} sono presenti le classi che contengono le regole di inferenza
+e gli algoritmi di saturazione. Questi verranno trattati nelle sezioni \ref{sec:vampire_saturazione} e \ref{sec:vampire_sat}.
+Nelle cartelle \textit{SAT} e \textit{Minisat} sono presenti le interfacce per utilizzare i SAT-Solver e
+il codice di Minisat, un SAT-Solver open-source. 
+Il funzionamento dei sat solver verrà discusso nella sezione \ref{sec:vampire_sat}.
 
-\section{I Termini}
-\section{Formule e Clausole}
-\section{Unificazione e Substitution Trees} 
-\section{Preprocessing}
-\section{Saturazione e Refutazione}
-\section{Il SAT-Solver}
-\section{Misurazione dei Tempi}
-\section{Opzioni}
 
+\section{I Termini} \label{sec:vampire_term}
+
+I termini, insieme a clausole e formule, sono la struttura dati più importante in un dimostratore di teoremi ed è quindi fondamentale
+che siano rappresentati nel modo più efficiente possibile. 
+Nella figura \ref{fig:vampire_terms} è mostrata una rappresentazione ad alto 
+livello e molto semplificata della struttura dei termini implementata in Vampire.
+Un termine come inteso nella sezione \ref{sec:sintassi_fof} è rappresentata dalla classe \textit{TermList}.
+TermList è composto da tre elementi principali: \textit{term}, \textit{content} e \textit{info}.
+I tre componenti sono definiti all'interno di una \textbf{union} per risparmiare memoria.
+\begin{itemize}
+    \item \textit{term} è un puntatore ad un oggetto della classe \textit{Term}
+    \item content è un intero di 64 bit
+    \item info è una struttura BitField di esattamente 64 bit
+\end{itemize}
+Essendo definiti all'interno di una union, ogni TermList dovrebbe occupare esattamente 64 bit di memoria.
+In vampire ogni variabile è rappresentata da un numero intero senza segno mentre i termini complessi
+composti da funzioni sono rappresentati dalla classe Term. 
+Se TermList rappresenta una variabile allora content shiftato di 2 bit a destra rappresenta l'indice di quella variabile ($content/4$),
+nel caso rappresenti una funzione allora term punta ad un oggetto di tipo Term che contiene l'effettiva struttura della funzione.
+Nella classe Term il nome della funzione è rappresentata da un intero senza segno globalmente univoco definito nella classe \textit{Signature}.
+La classe Signature contiene le informazioni relative all'indice, arità e nome di funzioni e predicati. 
+Term inoltre contiene un Array di TermList di lunghezza pari ad $arity+1$ che rappresenta gli argomenti della funzione listati 
+da destra verso sinistra. L'elemento in posizione 0 contiene un Termlist fittizio che contiene le info dello stesso termine.
+\begin{figure}[H]
+    \centering
+    \scalebox{0.55}{
+        \includesvg{images/3_vampire/Terms.svg}
+    }
+    \caption{Struttura dei termini}
+    \label{fig:vampire_terms}
+\end{figure}
+Tutti i termini di default sono rappresentati da una struttura Perfectly Shared (come descritto in \ref{sec:sintassi_fof}) per 
+risparmiare memoria e velocizzare le operazioni di confronto.
+I letterali sono rappresentati dalla classe \textit{Literal} che è una specializzazione della classe \textit{Term}.
+Nell'implementazione Vampire non fa nessuna distinzione tra nomi di funzione funzioni o predicati essi sono infatti rappresentati
+entrambi nella Signature come funzioni. 
+Termini e Letterali sono salvati nella Signature in strutture di indicizzazione (SubstitutionTree) per permettere un accesso veloce.
+Un accenno a queste strutture verrà fatto nella sezione \ref{sec:vampire_unification}.
+Literal in contiene inoltre funzioni specifiche per la manipolazione dei letterali come \textit{complementaryLiteral} 
+che restituisce lo stesso letterale negato (dalla struttura di indicizzazione se presente altrimenti ne crea uno nuovo).
+Le funzioni Term::create e Literal::create sono le funzioni utilizzate per creare nuovi termini e letterali e inserirli nella struttura di indicizzazione.
+
+Ad esempio, il predicato $\lnot p_1(f_2,f_3(x_5), x_5, f_3(x_5))$ viene rappresentato in memoria:
+
+\begin{figure}[H]
+    \centering
+    \scalebox{0.55}{    
+        \includesvg{images/3_vampire/term_rappresentazione.svg}
+    }
+    \caption{Esempio di rappresentazione di un termine}
+    \label{fig:vampire_term_example}
+\end{figure}
+
+
+
+
+\section{Unità, Formule e Clausole} \label{sec:vampire_formula}
+Vampire prende in input formule del tipo $A_1 \land A_2 \land ... \land A_n \land \lnot C$,
+dove $A_1, A_2, ..., A_n$ sono assiomi e $C$ è la congettura,
+e cerca di dimostrarne l'insoddisfacibilità.
+Per fare ciò il problema principale viene scomposto in una lista di elementi chiamati \textit{Unità}.
+Un unità è una formula o una clausola affiancata da una regola di inferenza che lo ha generata.
+In sostanza vi sono due tipi di inferenze, quelle che rappresentano unità date in input
+come \textit{Axiom} per indicare che l'unità è un assioma in input o
+\textit{Negated Conjecture} per indicare che l'unità è la negazione della congetture
+e quelle che rappresentano altre formule/clausole generate all'interno del processo dimostrativo.
+Le inferenze di questo tipo includono anche una reference alle formule che hanno generato la nuova unità,
+rendendo quindi possibile risalire alla dimostrazione al termine dell'esecuzione.
+
+
+\begin{figure}[H]
+    \centering
+    \scalebox{0.55}{
+        \includesvg{images/3_vampire/units.svg}
+    }
+    \caption{Struttura delle unità}
+    \label{fig:vampire_units}
+\end{figure}
+
+
+Le unità come mostrato in figura \ref{fig:vampire_units} sono rappresentate dalla classe astratta \textit{Unit},
+che si specializza nelle classi \textit{FormulaUnit} e \textit{ClauseUnit} che contengono rispettivamente un 
+puntatore ad un oggetto di tipo \textit{Formula} e \textit{Clause}.
+Le formule sono rappresentate da una struttura ad albero esattamente come quelle vista in \ref{sec:sintassi_bool} e \ref{sec:sintassi_fof}.
+La classe \textit{Formula} \ref{fig:vampire_formulas} è una classe astratta che si specializza nelle classi:
+\begin{itemize}
+    \item \textit{AtomicFormula} che rappresenta una formula composta da un solo letterale.
+    \item \textit{BinaryFormula} rappresenta le formule binarie $A \Rightarrow B$, $A \Leftrightarrow B$ e $A \oplus B$.
+    \item \textit{NegatedFormula} rappresenta le formule negate del tipo $\lnot A$.
+    \item \textit{QuantifiedFormula} rappresenta le formule quantificate del tipo $\forall/\exists x1, x2, ..., xn : A$.
+    \item \textit{JunctionFormula} rappresenta le formule composte dalla concatenazione di $\land$ e $\lor$.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \scalebox{0.5}{
+        \includesvg{images/3_vampire/Formulas.svg}
+    }
+    \caption{Struttura delle formule}
+    \label{fig:vampire_formulas}
+\end{figure}
+
+Le clausole sono rappresentate dalla classe \textit{Clause} \ref{fig:vampire_clauses} che è una specializza della classe \textit{Unit}.
+Ogni clausola contiene un Array di letterali e sono quindi rappresentate in maniera molto simile alla notazione insiemistica 
+vista in \ref{sec:forme_normali}.
+
+\begin{figure}[H]
+    \centering
+    \scalebox{0.55}{
+        \includesvg{images/3_vampire/Clauses.svg}
+    }
+    
+    \caption{Struttura delle Clausole}
+    \label{fig:vampire_clauses}
+\end{figure}
+
+
+\section{Unificazione e Substitution Trees} \label{sec:vampire_unification}
+\section{Preprocessing} \label{sec:vampire_preprocessing}
+\section{Algoritmo di Saturazione} \label{sec:vampire_saturazione}
+\section{Il SAT-Solver} \label{sec:vampire_sat}
+
+\begin{figure}[h]
+    \centering
+    \scalebox{0.5}{
+        \includesvg{images/3_vampire/sat.svg}
+    }
+    \caption{Classi e interfacce per il SAT-Solver}
+    \label{fig:vampire_sat_solver}
+\end{figure}
+\section{Misurazione dei Tempi} \label{sec:vampire_time}
+  
 \end{document}

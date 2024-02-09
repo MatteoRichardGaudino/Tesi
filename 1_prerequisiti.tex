@@ -139,13 +139,12 @@ logica implica l'equisoddisfacibilità ma non il viceversa. Si consideri ad esem
 può esserci conseguenza logica tra le due formule, ma sono equisoddisfacibili, infatti se $\alpha$ è un assegnamento per $\varphi$ allora è possibile
 costruire un assegnamento $\beta$ per $\psi$ tale che $\beta(s_1) = 1-\alpha(s_1)$ e viceversa.
 
-Un'\textit{inferenza} è una qualunque funzione da $F$ in $F$. Un'inferenza è detta \textit{corretta} se conserva la soddisfacibilità, ovvero 
-se non può generare una formula insoddisfacibile a partire da una formula soddisfacibile (soundness).
-Un esempio di inferenza è la regola del \textit{Modus Ponens}. Data una formula $\varphi \land (\varphi \Rightarrow \psi)$ si può inferire $\psi$.
-Viene spesso utilizzato il simbolo $P \vdash C$ per indicare l'applicazione di un'inferenza alla \textit{Premessa} $P$ per ottenere una \textit{Conclusione} $C$.
-Si considera inferenza anche una funzione da $F^n$ in $F$ ma in questo caso la n-pla di premesse viene comunque considerata come se fosse in congiunzione ($\land$).
+Un'\textit{inferenza} è una qualunque relazione da $F^n \times F$. Un'inferenza è detta \textit{corretta} se conserva la soddisfacibilità, ovvero 
+se a a partire da formule soddisfacibili non associa formule insoddisfacibili (soundness).
+Un esempio di inferenza è la regola del \textit{Modus Ponens}. Date le premesse $\varphi, (\varphi \Rightarrow \psi)$ si può inferire $\psi$.
+Viene utilizzato il simbolo $P \vdash C$ per indicare l'applicazione di un'inferenza alla \textit{Premessa} $P$ per ottenere una \textit{Conclusione} $C$.
 In notazione la regola del modus ponens viene espressa così: $[\varphi, \varphi \Rightarrow \psi] \vdash \psi$ oppure
-$\frac{\varphi, \varphi \Rightarrow \psi}{\psi} $
+$\frac{\varphi, \varphi \Rightarrow \psi}{\psi} $.
 
 Infine, si definisce \textit{Implicante} di una formula $\varphi$ un insieme $I$ di letterali di $\varphi$ che rendono vera $\varphi$. Cioè, costruendo una
 assegnazione $\alpha$ tale che $\alpha \models c$ per ogni letterale $c \in I$, si ha che $\alpha \models \varphi$. In altre parole la formula 
@@ -171,23 +170,23 @@ La prima tra queste è la \textit{NNF} ossia \textit{Negated Normal Form} (Forma
 sse non contiene connettivi semplificati ($\Rightarrow$, $\Leftrightarrow$, $\oplus$) e la negazione è applicata solo a letterali. La classe di formule 
 NNF è generata dalla seguente grammatica:
 
-$$ \eta := \top \mid \bot \mid C \mid \lnot C \mid (\eta \land \eta) \mid (\eta \lor \eta ) $$
+$$ \eta := \top \mid \bot \mid S \mid \lnot S \mid (\eta \land \eta) \mid (\eta \lor \eta ) $$
 
-Dove $C \in \Sigma_c$ è un simbolo di costante. La normalizzazione di una formula in NNF è un processo semplice che consiste nell'applicare opportunamente 
+Dove $S \in \Sigma_s$ è un simbolo di costante. La normalizzazione di una formula in NNF è un processo semplice che consiste nell'applicare opportunamente 
 le regole di De Morgan e le regole di semplificazione dei connettivi.
 
 La seconda forma normale è la \textit{ENNF} ossia \textit{Extended Negated Normal Form} (Forma normale negata estesa). 
 Il formato ENNF è essenzialmente una classe più permissiva della NNF, in quanto conserva il vincolo sulla negazione ma 
 vieta esclusivamente l'uso di '$\Rightarrow$'. La classe di formule ENNF è generata dalla seguente grammatica:
  
-$$ \overline{\eta}  := \top \mid \bot \mid C \mid \lnot C \mid (\overline{\eta} \land \overline{\eta}) \mid (\overline{\eta} \lor \overline{\eta} ) \mid (\overline{\eta} \Leftrightarrow \overline{\eta}) \mid (\overline{\eta} \oplus \overline{\eta}) $$
+$$ \overline{\eta}  := \top \mid \bot \mid S \mid \lnot S \mid (\overline{\eta} \land \overline{\eta}) \mid (\overline{\eta} \lor \overline{\eta} ) \mid (\overline{\eta} \Leftrightarrow \overline{\eta}) \mid (\overline{\eta} \oplus \overline{\eta}) $$
 
 La terza e ultima forma normale è la \textit{CNF} ossia \textit{Conjunctive Normal Form} (Forma normale congiuntiva). Una formula è in formato CNF
 sse è una congiunzione di disgiunzioni di letterali. La classe di formule CNF è generata dalla seguente grammatica:
 
 
 $$ \zeta := \xi \mid (\xi \land \zeta) $$
-$$ \xi := \top \mid \bot \mid C \mid \lnot C \mid (\xi \lor \xi ) $$
+$$ \xi := \top \mid \bot \mid S \mid \lnot S \mid (\xi \lor \xi ) $$
 
 La classe CNF è storicamente la più famosa e utilizzata, in quanto è la più semplice da implementare e da manipolare. È possibile vedere le clausole
 come insiemi di letterali mentre la formula principale è vista come un insieme di clausole. Ad esempio, la CNF $(s_1 \lor \lnot s_2) \land (s_3)$ può essere rappresentata
@@ -222,7 +221,7 @@ $$ \varphi \lor \psi$$
 E che $\varphi$ e $\psi$ generino rispettivamente $n$ e $m$ clausole. Continuando a clausificare con l'algoritmo 
 descritto nel paragrafo \ref{sec:forme_normali}, si ottengono $n \cdot m$ clausole. 
 Questo perché la continua applicazione della proprietà distributiva porta a una duplicazione considerevole delle sottoformule.
-Una possibile tecnica di ottimizzazione è quella del \textit{Naming} anche detto \textit{Renamig}.
+Una possibile tecnica di ottimizzazione è quella del \textit{Naming} \cite{naming} anche detto \textit{Renamig}.
 In generale per \textit{Naming} si intende una qualunque tecnica di rinomina di letterali o sottoformule.
 In questo caso, per \textit{Naming} si intende la rinomina di sottoformule tramite l'aggiunta di un nuovo simbolo di costante.
 Per l'esempio precedente si assuma che $s_n$ sia un simbolo di costante non presente nella formula originale.
@@ -282,7 +281,7 @@ Un \textit{termine} è una stringa generata dalla seguente grammatica:
 
 $$ \tau := X \mid f(\tau_1, ..., \tau_n) $$
 
-Dove $X$ è un simbolo di variabile, $C$ è un simbolo di costante e $f$ è un simbolo di funzione tale che $arity(f) = n$. In altre parole:
+Dove $X$ è un simbolo di variabile e $f$ è un simbolo di funzione tale che $arity(f) = n$. In altre parole:
 \begin{itemize}
   \item Ogni variabile è un termine
   \item Ogni funzione costante è un termine
@@ -574,8 +573,8 @@ Come per la logica proposizionale, la trasformazione di una formula in ENNF/NNF 
 possibile trasformare una formula in una equivalente in ENNF/NNF. 
 Il calcolo per la normalizzazione viene effettuato allo stesso modo ma con l'aggiunta di due regole per la negazione dei quantificatori:
 
-$$ \lnot \forall x (\varphi) \rightarrow \exists x (\lnot \varphi) $$
-$$ \lnot \exists x (\varphi) \rightarrow \forall x (\lnot \varphi) $$
+$$ \lnot \forall x (\varphi) \vdash \exists x (\lnot \varphi) $$
+$$ \lnot \exists x (\varphi) \vdash \forall x (\lnot \varphi) $$
 
 
 Chiameremo \textit{prefisso di quantificatori} una lista di quantificatori (es. $\forall x_1 \forall x_2 \exists x_3$). 
@@ -704,7 +703,7 @@ Il secondo risultato, detto \textit{Secondo teorema di incompletezza} afferma ch
 \end{displayquote}
 
 Per capire il senso dei due teoremi è necessario introdurre, i concetti di \textit{Teoria}, \textit{Teorema} e \textit{Sistema formale}.
-Un sistema formale è l'unione di questi quattro elementi:
+Un sistema formale è un insieme di questi quattro elementi:
 
 \begin{itemize}
   \item Un alfabeto di simboli.
@@ -718,7 +717,7 @@ la regola d'inferenza del modus ponens della sezione \ref{sec:assegnamenti}
 e come insieme di assiomi le formule proposizionali $\{s_1, s_1 \Rightarrow s_2\}$
 si ottiene a tutti gli effetti un sistema formale basato sulla logica proposizionale.
 Un \textit{Teorema} è un assioma o una qualunque formula che può essere ottenuta applicando un numero finito di volte le regole d'inferenza agli assiomi.
-Nell'esempio precedente $s_2$ è un teorema del sistema formale ($s_1 \land (s_1 \Rightarrow s_2) \vdash s_2$).
+Nell'esempio precedente $s_2$ è un teorema del sistema formale ($s_1, (s_1 \Rightarrow s_2) \vdash s_2$).
 Una derivazione sintattica di questo tipo è detta \textit{Dimostrazione}.
 Per coerenza si intende la proprietà che il sistema non possa dimostrare una contraddizione,
 come una formula del tipo $\psi \land \lnot \psi$.
@@ -729,11 +728,11 @@ Una \textit{Teoria} è un insieme $T$ di formule che rispetta le seguenti propri
   \item Per ogni $P \in T^n$ se $P \vdash C$ per qualche regola d'inferenza del sistema formale allora $C \in T$ (Chiusura rispetto la derivazione). 
 \end{enumerate}
 
-Rispetto l'esempio precedente l'insieme $\{s_1, s_1 \Rightarrow s_2\}$ è una teoria.
+Rispetto l'esempio precedente l'insieme $\{s_1, s_1 \Rightarrow s_2\, s_2\}$ è una teoria.
 In notazione si scrive $\vdash_T \varphi$ per indicare che la formula $\varphi$ è dimostrabile nella teoria $T$.
 
 
-Tornando alla tesi di Gödel si basa sulla costruzione di una codifica delle formule e delle dimostrazioni
+Tornando alla tesi di Gödel, essa si basa sulla costruzione di una codifica delle formule e delle dimostrazioni
 di PM nello stesso linguaggio formale PM. 
 Ogni formula (e regola di inferenza) $\varphi$ viene mappata in un numero naturale $\ulcorner  \varphi \urcorner $.
 In particolare grazie a questa codifica riesce a formalizzare i seguenti predicati all'interno di PM stesso:
@@ -775,7 +774,7 @@ Gödel e un approfondimento nella Teoria della \textit{Computabilità}. Tuttavia
 In sintesi i teoremi di Gödel evidenziano i limiti di metodi sintattici per la dimostrazione di teoremi all'interno di un sistema formale.
 Erroneamente si potrebbe pensare che i teoremi provino l'esistenza di formule indimostrabili con ogni metodo,
 ma in realtà non mostrano nessuna limitazione sul fatto che una formula sia dimostrabile ad esempio in un altro sistema formale o con metodi semantici.
-Si prenda ad esempio il gioco del \textit{MU} dal libro di Hofstadter.
+% Si prenda ad esempio il gioco del \textit{MU} dal libro di Hofstadter.
 
 A chiudere il cerchio tra sistemi formali, aritmetica e logica arriva in aiuto il teorema di Church sull'indecidibilità 
 della logica del primo ordine:
@@ -808,6 +807,8 @@ Un ATP infatti può essere visto come un algoritmo di manipolazione sintattica c
 tramite un sistema di inferenze,
 ma il teorema di Church afferma che, per quanto sofisticato, esisteranno sempre degli input per cui l'algoritmo non terminerà.
 Questa limitazione rappresenta una barriera fondamentale nell'ambito della dimostrazione automatica.
+% ed evidenzia la necessità di sviluppare sempre nuove tecniche per risolvere il problema della soddisfacibilità.
+
 
 \section{Resolution e Dimostrazione Automatica} \label{sec:resolution}
 \textit{Resolution} o \textit{Risoluzione} è una regola d'inferenza per logica proposizionale e del primo ordine.
@@ -818,7 +819,7 @@ $$ \frac{\{L\} \cup C_1, \{\lnot L\} \cup C_1}{C_1 \cup C_2} $$
 Dove $C_1$ e $C_2$ sono clausole in notazione insiemistica e $L$ è un letterale. 
 La regola afferma che se si hanno due clausole dove una contiene un letterale e l'altra la sua negazione allora è possibile
 ottenere una nuova clausola che è l'unione delle due clausole senza il letterale e la sua negazione.
-Resolution è un'inferenza preserva la conseguenza logica e quindi è corretta. 
+Resolution preserva la conseguenza. 
 Con il nome Resolution spesso ci si riferisce anche ad una classe di algoritmi che sfrutta questa regola come inferenza principale 
 per risolvere il problema della soddisfacibilità.
 Un famoso esempio di algoritmo per la logica proposizionale basato su Resolution è l'algoritmo di Davis-Putnam anche chiamato \textit{DPP} (Davis-Putnam-Procedure).
