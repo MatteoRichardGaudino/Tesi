@@ -167,8 +167,36 @@ vista in \ref{sec:forme_normali}.
 
 \section{Unificazione e Substitution Trees} \label{sec:vampire_unification}
 \section{Preprocessing} \label{sec:vampire_preprocessing}
+(vampire utilizza solo clausole per la dimostrazione)
 \section{Algoritmo di Saturazione} \label{sec:vampire_saturazione}
 \section{Il SAT-Solver} \label{sec:vampire_sat}
+Vampire non implementa un SAT-Solver ma ha un vasto sistema di interfacce per utilizzare al meglio SAT-Solver esterni.
+Al momento gli unici SAT-Solver supportati sono MiniSat e Z3, anche se l'inclusione di Z3 è ancora in fase sperimentale.
+Per utilizzare un SAT-Solver è necessario creare Clausole e letterali appositi per la rappresentazione delle costanti proposizionali.
+Nella figura \ref{fig:vampire_sat_solver} è mostrata la struttura delle classi e delle interfacce per il SAT-Solver.
+La classe \textit{SATLiteral} rappresenta una costante proposizionale ed è costituita da una coppia intero-booleano che rappresenta
+l'indice della costante e la sua polarità. 
+La classe \textit{SATClause} come la classe \textit{Clause} è costituita da un Array, in questo caso di \textit{SATLiteral}.
+Uno dei componenti Built-in di Vampire è la classe \textit{Sat2FO} che si occupa di convertire letterali e clausole 
+del primo ordine (FO) in oggetti di tipo \textit{SATLiteral} e \textit{SATClause} (SAT) e viceversa. 
+La chiamata della funzione \textit{Sat2FO::toSat(Literal*)} aggiunge ad una bi-mappa il puntatore al letterale
+e lo associa ad un nuovo numero unsigned $\geq 1$ se non è già presente altrimenti restituisce il numero già associato.
+La funzione \textit{Sat2FO::toFO(SATLiteral*)} restituisce il puntatore al letterale associato al numero passato come argomento
+se presente altrimenti \textit{nullptr}.
+
+La classe astratta \textit{SATSolver} rappresenta un generico SAT-Solver e contiene le funzioni virtuali comuni a tutti i SAT-Solver 
+come \textit{addClause(SATClause*)}, \textit{solve} e \textit{trueInAssignment(SATLiteral)} per 
+aggiungere clausole, risolvere il problema e ottenere l'assegnamento delle variabili proposizionali (se soddisfacibile). 
+Ogni variabile prima di essere utilizzata ha bisogno di essere 'registrata' tramite la funzione \textit{newVar} che restituisce
+l'indice incrementale della nuova variabile registrata. Un altro metodo è quello di utilizzare la funzione \textit{ensureVarCount(count)} che 
+assicura che il numero di variabili registrate sia almeno pari a count.
+Se si è utilizzata la classe \textit{Sat2FO} è possibile utilizzare la combinazione \textit{SATSolver::ensureVarCount(Sat2FO::maxSATVar())}
+per assicurarsi che il numero di variabili registrate sia almeno pari al numero di costanti proposizionali utilizzate.
+
+\textit{SATSolverWithAssumption} estende \textit{SATSolver} e permettere di aggiungere delle assunzioni (Dei letterali che devono essere veri nella soluzione).
+\textit{PrimitiveProofRecordingSATSolver} estende \textit{SATSolverWithAssumption} e definisce le funzioni per risalire alla dimostrazione di insoddisfacibilità.
+\textit{MinisatInterfacing} è una classe che si occupa di interfacciare Vampire con la classe \textit{Minisat} che contiene
+l'effettivo codice di Minisat.
 
 \begin{figure}[h]
     \centering
@@ -178,6 +206,43 @@ vista in \ref{sec:forme_normali}.
     \caption{Classi e interfacce per il SAT-Solver}
     \label{fig:vampire_sat_solver}
 \end{figure}
+
+Ad esempio si pensi di voler determinare la soddisfacibilità della formula CNF FO ground 
+$\varphi := (p_1(f_1) \lor p_2 \lor \lnot p_3) \land (\lnot p_2 \lor \lnot p_3) \land (\lnot p_1(f_1))$.
+In primo luogo le clausole vengono divise in unità e rappresentate come Array di letterali:
+$$unitList := [[p_1(f_1), p_2, \lnot p_3], [\lnot p_2, \lnot p_3], [\lnot p_1(f_1)]]$$
+Applicando la funzione \textit{Sat2FO::toSat(Clause*)} ad ogni clausola si ottiene una lista di SATClausole:
+$$satUnitList := [[1, 2, -3], [-2, -3], [-1]]$$
+A questo punto vanno registrate le variabili nel SAT-solver e aggiunte le clausole:
+
+$satSolver = new SatSolver()$ \\
+$satSolver.ensureVarCount(sat2Fo.maxSATVar())$ \\
+\For{$c \in satUnitList$}{
+    $satSolver.addClause(c)$
+}
+
+A questo punto è possibile chiamare la funzione \textit{solve} del SAT-Solver per ottenere la soddisfacibilità della formula.
+In questo caso la formula è soddisfacibile un possibile assegnamento è $[1 \rightarrow false, 2 \rightarrow false, 3 \rightarrow false]$.
+SatSolver non ha una funzione per ottenere l'assegnamento direttamente ma è possibile ottenere l'assegnamento di ogni singola variabile
+tramite la funzione \textit{trueInAssignment(SATLiteral)}.
+
+$\alpha := EmptyMap<Literal*, bool>()$ \\
+\ForEach{$c \in unitList$}{
+    \ForEach{$l \in c$}{
+        \If{$l.polarity()$}{
+            $\alpha[l] := solver.trueInAssignment(sat2Fo.toSat(l))$
+        }
+    }
+}
+
+
+Per chiedere al SAT-Solver di cercare un altro assegnamento è possibile aggiungere una nuova clausola 
+che rende l'assegnamento trovato incompatibile. Una clausola del genere è detta clausola bloccante (Blocking Clause) o clausola di conflitto (Conflict Clause).
+In questo caso una possibile clausola bloccante è $[1,2,3]$. 
+Con l'aggiunta di questa clausola la formula diventa insoddisfacibile e il SAT-Solver restituirà \textit{UNSATISFIABLE} alla chiamata di \textit{solve}.
+Un modo per creare una clausola bloccante è quello di utilizzare la funzione Built-in di \textit{Sat2FO::createConflictClause(LiteralStack)}
+che prende in input una lista di letterali e restituisce una SatClausola con i letterali negati.
+
 \section{Misurazione dei Tempi} \label{sec:vampire_time}
   
 \end{document}
