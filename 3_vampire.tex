@@ -46,6 +46,8 @@ e gli algoritmi di saturazione. Questi verranno trattati nelle sezioni \ref{sec:
 Nelle cartelle \textit{SAT} e \textit{Minisat} sono presenti le interfacce per utilizzare i SAT-Solver e
 il codice di Minisat, un SAT-Solver open-source. 
 Il funzionamento dei sat solver verrà discusso nella sezione \ref{sec:vampire_sat}.
+Nella cartella \textit{Debug} sono presenti le classi e le macro per la misurazione dei tempi e le statistiche di esecuzione.
+Alcuni esempi verranno mostrati nella sezione \ref{sec:vampire_time}.
 
 
 \section{I Termini} \label{sec:vampire_term}
@@ -244,5 +246,51 @@ Un modo per creare una clausola bloccante è quello di utilizzare la funzione Bu
 che prende in input una lista di letterali e restituisce una SatClausola con i letterali negati.
 
 \section{Misurazione dei Tempi} \label{sec:vampire_time}
+Quando le performance sono un fattore critico è necessario avere un insieme di strumenti per misurare i tempi di esecuzione.
+Vampire mette a disposizione vari modi per misurare i tempi ed eseguire statistiche. In questa sezione ne verranno trattati essenzialmente tre.
+Il primo metodo più classico consiste semplicemente nel rilevare due tempi e calcolare la differenza.
+Questo può essere fatto utilizzando la funzione \textit{elapsedMilliseconds} della classe \textit{Timer} 
+che restituisce il tempo in millisecondi trascorso dall'inizio dell'esecuzione del programma. 
+Un timer globale è disponibile nell'oggetto globale \textit{env} della classe \textit{Lib/Environment}.
+
+$t_{start} := env.timer{\rightarrow}elapsedMilliseconds()$ \\
+... \\
+$t_{end} := env.timer{\rightarrow}elapsedMilliseconds()$ \\
+$\Delta t := t_2 - t_1$
+
+Il secondo metodo consiste nell'utilizzare la macro \textit{TIME\_TRACE(name)}
+che misura il tempo trascorso tra l'invocazione e la fine del blocco di codice.
+'name' è una stringa che di norma dovrebbe essere definita nella classe \textit{Debug/TimeProfiling} con tipo
+\textit{static constexpr const char* const}.
+È possibile chiamare più volte \textit{TIME\_TRACE} (con 'name' diversi) in più blocchi annidati e alla fine dell'esecuzione, con l'opzione \textit{-tstat} attiva,
+Vampire stamperà un report con un albero delle chiamate e i tempi trascorsi, il numero di chiamate e il tempo medio per chiamata.
+Un esempio di report è mostrato in figura \ref{fig:time_trace_report}.
+
+\begin{figure}[h]
+    \centering
+    \scalebox{0.5}{
+        \includegraphics{images/3_vampire/time_profile.png}
+    }
+    \caption{Esempio di report di Time Trace}
+    \label{fig:time_trace_report}
+\end{figure}
+
+Il terzo metodo non è serve a misurare il tempo di esecuzione ma conta il numero di invocazioni.
+La macro \textit{RSTAT\_CTR\_INC(name)} definita in \textit{Debug/RuntimeStatistics} definisce 
+un contatore associato ad ogni 'name' e lo incrementa di 1 ad ogni invocazione.
+Anche in questo caso Vampire stamperà un report alla fine dell'esecuzione con il formato \textit{'name': 'count'}.
+Vampire utilizza questa macro ad esempio per contare il numero di clausole create e il numero di clausole eliminate.
+Un esempio di report è mostrato in figura \ref{fig:rstat_report}.
+
+\begin{figure}[h]
+    \centering
+    \scalebox{0.5}{
+        \includegraphics{images/3_vampire/runtime_statistics.png}
+    }
+    \caption{Esempio di report di Runtime Statistics}
+    \label{fig:rstat_report}
+\end{figure}
+
+
   
 \end{document}
