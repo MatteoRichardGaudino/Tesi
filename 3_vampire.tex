@@ -169,8 +169,165 @@ vista in \ref{sec:forme_normali}.
 
 \section{Unificazione e Substitution Trees} \label{sec:vampire_unification}
 \section{Preprocessing} \label{sec:vampire_preprocessing}
-(vampire utilizza solo clausole per la dimostrazione)
+Vampire è in grado di elaborare formule del primo ordine in qualsiasi forma, 
+tuttavia, poiché il suo algoritmo di saturazione opera esclusivamente su clausole,
+è necessario eseguire delle operazioni di trasformazioni sull'input.
+L'insieme di queste operazioni è chiamato \textit{Preprocessing}.
+Il preprocessing non ha solo lo scopo di convertire la formula in input in una 
+equisoddisfacibile in forma clausale ma ha anche l'obbiettivo di rendere il problema più
+semplice (se possibile).
+Tutte le operazioni non essenziali sono attivabili/disattivabili tramite
+opzioni da riga di comando e in generale non superano la complessità di $O(n \cdot log(n))$.
+Di seguito sono riportate le principali operazioni di preprocessing eseguite da Vampire:
+
+\begin{enumerate}
+    \item \textbf{\textit{Rectify}}:
+    Verifica se la formula contiene variabili libere e in caso affermativo le quantifica
+    e verifica che la stessa variabile non sia quantificata più volte nello stesso ramo dell'albero sintattico.
+    \item \textbf{\textit{Simplify}}:
+    Semplifica e Rimuove le occorrenze di $\bot$ e $\top$ quanto possibile.
+    \item \textbf{\textit{Flatten}}:
+    Unisce sequenze di $\land$/$\lor$ in un'unica congiunzione/disgiunzione o 
+    sequenze di $\forall$/$\exists$ in un'unica quantificazione.
+    \item \textbf{\textit{Unused definitions and pure predicate removal}} (opzionale): \\
+    Elimina i predicati costanti che non possono creare contraddizioni.
+    \item \textbf{\textit{ENNF}}:
+    Trasforma la formula in forma ENNF come visto in \ref{sec:forme_normali_fof}.
+    \item \textbf{\textit{NNF}}:
+    Trasforma la formula in forma NNF come visto in \ref{sec:forme_normali_fof}.
+    \item \textbf{\textit{Skolemization}}:
+    Elimina i quantificatori esistenziali come visto in \ref{sec:forme_normali_fof} con l'unica 
+    differenza che si evita di convertire la formula in PNF.
+    \item \textbf{\textit{Clausification}}:
+    Clausifica la formula in modo simile a come accennato in \ref{sec:forme_normali_fof}.
+\end{enumerate}
+
+
+
 \section{Algoritmo di Saturazione} \label{sec:vampire_saturazione}
+Vampire fa parte di una famiglia di ATP basati su saturazione che implementa la \textit{Given Clause Architecture} (\textit{GCA}).
+Data una formula in formato CNF la GCA prevede due insiemi di clausole dette \textit{Attive} e \textit{Passive}.
+Inizialmente l'insieme delle clausole attive è vuoto e l'insieme delle clausole passive contiene tutte le clausole della formula.
+Dopo questo setup iniziale comincia quello che viene chiamato \textit{Main Loop}.
+Il Main Loop è un ciclo che termina quando l'insieme delle clausole passive è vuoto o quando viene trovata una clausola vuota.
+Ad ogni iterazione il Main Loop seleziona una clausola dall'insieme delle clausole passive. 
+Questa clausola viene chiamata \textit{Given Clause} (\textit{GC}). 
+Lo step successivo consiste nell'applicare tutte le inferenze possibili tra la GC e le clausole attive.
+Le nuove clausole generate vengono aggiunte all'insieme delle clausole passive mentre la GC viene spostata nell'insieme delle clausole attive.
+Se una delle nuove clausole generate è la clausola vuota all'ora il Main Loop termina e la formula è insoddisfacibile.
+Se invece l'insieme delle clausole passive viene totalmente svuotato allora il sistema è Saturo e la formula è soddisfacibile.
+Nel caso la formula non sia insoddisfacibile l'insieme delle clausole passive potrebbe non svuotarsi mai,
+in questo caso Il Main Loop termina quando sono terminate le risorse disponibili.
+
+\begin{algorithm}[H]
+    \caption{Architettura Given Clause}
+    \KwSty{Firma:}{ Saturation($\varphi$)}
+
+    \KwIn{$\varphi$ Una formula in formato CNF}
+    \KwOut{$\top$ se $\varphi$ è soddisfacibile, $\bot$ altrimenti}
+
+    $active = \emptyset$ \\
+    $passive = \varphi$ \\
+
+    \While{$passive \neq \emptyset$}{
+        $current := select(passive)$\;
+        $passive.remove(current)$\;
+        $active.add(current)$\;
+        
+        $newClauses := infer(current, active)$\;
+        \If{$\Box \in newClauses$}{
+            \Return $\bot$\;
+        }
+        $passive.add(newClauses)$\;
+    }
+    \Return $\top$\;
+\end{algorithm}
+
+
+Come già accennato in \ref{sec:resolution} Otter è stato uno dei primi ATP basati su saturazione e su GCA.
+In particolare Otter aggiunge a GCA due nuovi step chiamati di semplificazione.
+Il sistema di inferenze viene diviso in due classi, le inferenze generative e di semplificazione.
+Le inferenze generative prendono una o più clausole e generano nuove clausole.
+Le inferenze di semplificazione prendono una o più clausole e inferiscono 
+una nuova clausola, generalmente più corta, che rende le premesse ridondanti in modo da poterle sostituire
+con la clausola generata. 
+Nel primo step di semplificazone chiamato \textit{Forward semplification} dopo aver selezionato una 
+clausola dall'insieme delle clausole passive si tenta di applicare le inferenze di semplificazione
+alla clausola selezionata. Il secondo step di semplificazione chiamato \textit{Backward semplification}
+consiste nell'applicare le inferenza di semplificazione alle clausole attive e passive.
+Gli algoritmi che implementano questa struttura vengono detti \textit{Otter} o che
+implementano la \textit{Otter's Architecture}. Un esempio di Otter's Architecture è mostrato in \ref{alg:otter_architecture}.
+
+\begin{algorithm}[H]
+    \caption{Architettura Otter} \label{alg:otter_architecture}
+    \KwSty{Firma:}{ Saturation($\varphi$)}
+
+    \KwIn{$\varphi$ Una formula in formato CNF}
+    \KwOut{$\top$ se $\varphi$ è soddisfacibile, $\bot$ altrimenti}
+
+    $active = \emptyset$ \\
+    $passive = \varphi$ \\
+
+    \While{$passive \neq \emptyset$}{
+        $current := select(passive)$\;
+        $passive.remove(current)$\;
+
+        \If{$retained(current)$}{
+            $current := forwardSimplify(current, active, passive)$\;
+            \If{$current = \Box$}{
+                \Return $\bot$\;
+            }
+            \If{$retained(current)$}{
+                $(active, passive) := backwardSimplify(current, active, passive)$\;
+                $active.add(current)$\;
+
+                $newClauses := infer(current, active)$\;
+                \If{$\Box \in newClauses$}{
+                    \Return $\bot$\;
+                }
+                $passive.add(newClauses)$\;
+            }
+        }
+    }
+    \Return $\top$\;    
+\end{algorithm}
+
+Con la funzione \textit{retained} si intende una funzione che restituisce \textit{true} se la clausola 
+è utile per la dimostrazione e \textit{false} altrimenti. 
+Ad esempio se la clausola è una tautologia viene scartata.
+Questa fase è detta \textit{Retention Test}
+Vampire implementa tre algoritmi di saturazione, \textit{Otter}, \textit{LRS} \textit{Discount}.
+Otter è una versione leggermente modificata della Otter's Architecture. Al posto di avere solo due insiemi di clausole attive e passive,
+ha un terzo insieme chiamato \textit{unprocessed}. 
+All'inizio dell'esecuzione tutte le clausole vengono inserite nell'insieme unprocessed.
+Il Main Loop continua finchè l'insieme unprocessed non è vuoto.
+Ad ogni iterazione viene selezionata una clausola dall'insieme unprocessed e viene applicato lo stesso procedimento di Otter.
+Quando si arriva al momento di applicare le inferenze generative la given clause viene spostata nell'insieme delle clausole passive 
+mentre le nuove clausole generate vengono inserite nell'insieme unprocessed.
+L'algoritmo LRS (Low resource strategy) è una versione modificata di Otter che guida l'algoritmo in base ai limiti di tempo e memoria dati in input 
+e il tempo/memoria restanti. 
+In particolare quando si effettua il retention test LSR valuta se la clausola è troppo grande da processare in base al tempo e alla memoria rimanente.
+Se la clausola è troppo grande viene scartata anche a costo della perdita di completezza.
+In particolare se la formula è valida e la clausola scartata potrebbe essere necessaria per completare la saturazione.
+In questo caso se l'algoritmo termina con un errore.
+Nel caso la formula sia insoddisfacibile LSR in alcuni casi performa meglio quando si restringono i limiti di tempo e memoria.
+L'algoritmo Discount è simile ad Otter solo che gli step di semplificazione vengono eseguiti solo sull'insieme delle clausole attive.
+Questo è dovuto al fatto che l'insieme delle clausole passive è significativamente più ampio rispetto a quello delle clausole attive. 
+Le clausole attive sono spesso solo l'1\% di quelle passive, il che comporta tempi prolungati durante gli step di semplificazione 
+poiché è necessario dedicare molto tempo alla semplificazione delle clausole passive.
+
+Vampire implementa un vasto sistema di inferenze ma il sottoinsieme minimo necessario per la completezza (per la soddisfacibilità di formule senza uguaglianza) è composto 
+dalle inferenze di \textit{Resolution} e \textit{Factoring}.
+
+\begin{itemize}
+    \item[]\textbf{Resolution}: 
+    $$ \frac{\{L(\tau_1, ..., \tau_n)\} \cup C_1, \{\lnot L(\omega_1, ..., \omega_n)\} \cup C_1}{(C_1 \cup C_2)^\sigma} $$
+    \item[]\textbf{Factoring}: 
+    $$ \frac{\{L(\tau_1, ..., \tau_n)\} \cup C \cup \{L(\omega_1, ..., \omega_n)\}}{(\{L(\tau_1, ..., \tau_n)\} \cup C)^\sigma} $$
+\end{itemize}
+
+Con $L$ un letterale, $C_1, C_2$ clausole, $\tau_1, ..., \tau_n, \omega_1, ..., \omega_n$ termini e $\sigma$ un unificatore.
+
 \section{Il SAT-Solver} \label{sec:vampire_sat}
 Vampire non implementa un SAT-Solver ma ha un vasto sistema di interfacce per utilizzare al meglio SAT-Solver esterni.
 Al momento gli unici SAT-Solver supportati sono MiniSat e Z3, anche se l'inclusione di Z3 è ancora in fase sperimentale.
