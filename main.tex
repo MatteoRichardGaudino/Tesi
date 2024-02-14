@@ -31,15 +31,18 @@
 
 \begin{document}
 
+\pagenumbering{roman}
+
 % ------ frontespizio ------
 \subfile{frontespizio}
 % --------------------------
 ~
+\thispagestyle{empty}
 \clearpage % pagina vuota intenzionale
 
 
 \fontsize{13}{15}\selectfont
-
+\pagenumbering{arabic}
 \tableofcontents
 \pagestyle{plain} %o fancy, se userete fancyhdr (consigliato)
 
