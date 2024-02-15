@@ -3,15 +3,210 @@
 \begin{document}
 \chapter{Implementazione di procedure di decisione per frammenti Binding in Vampire}
 L'algoritmo di decisione, la classificazione, Il preprocessing
-\section{Algoritmo di Classificazione}
 
 \section{Preprocessing}
+
+\begin{figure}[H]
+    \centering
+    \scalebox{0.55}{
+        \includesvg{images/4_progettazione/Preprocess.svg}
+    }
+    \caption{Struttura del Preprocessing}
+    \label{fig:preprocessing}
+\end{figure}
+
 \subsection{Boolean Top Formula}
 \subsection{Forall-And}
 \subsection{SAT-Clausification}
 
 \section{Procedura di Decisione}
+\begin{figure}[H]
+    \centering
+    \scalebox{0.55}{
+        \includesvg{images/4_progettazione/OneBindingAlgorithm.svg}
+    }
+    \caption{Struttura dell'algoritmo di decisione}
+    \label{fig:algoritmo_decisione}
+\end{figure}
+
 \subsection{Implicants Sorting}
 \subsection{Maximal Unifiable Subsets}
+
+
+\begin{algorithm}[H]
+    \caption{Maximal Unifiable Subsets}
+    \KwSty{Firma:}{ mus($literal$)}\\
+    \KwIn{$literal$ un puntatore ad un letterale}
+    \KwOut{$\top$ o $\bot$}
+    \KwSty{GlobalData: }{ S una mappa da letterali a bool}
+
+%     if(_s[literal] != 0)
+%     return true;
+%   if (literal->ground()) {
+%     return _groundLiteralMus(literal);
+%   }
+
+%   _s[literal] = 1;
+%   LiteralList* l = LiteralList::empty();
+%   bool res = _musV2(literal, l);
+%   _s[literal] = -1;
+%   delete l;
+%   return res;
+
+\If{$S[literal]$}{
+    \Return $\top$\;
+}
+\If{$literal$ is ground}{
+    \Return $groundLiteralMus(literal)$\;
+}
+
+$S[literal] = \top$\;
+$l := \emptyset$\;
+$res := mus(literal, l)$\;
+$S[literal] = \bot$\;
+\Return $res$\;
+\end{algorithm}
+
+
 \subsection{Algoritmo Finale}
+
+
+
+\section{Algoritmo di Classificazione}
+
+(Input formula rettificata senza true e false)
+
+\begin{figure}[H]
+    \centering
+    \scalebox{0.55}{
+        \includesvg{images/4_progettazione/Classifier.svg}
+    }
+    \caption{Classificatore}
+    \label{fig:classifier}
+\end{figure}
+
+
+\begin{algorithm}
+\caption{Classificatore esterno}
+\KwSty{Firma:}{ classify($\varphi$)}
+\KwIn{$\varphi$ Una formula rettificata}
+\KwOut{Un elemento dell'enumerazione Fragment}
+
+\Switch{$\varphi$}{
+    \Case{$Literal$}{
+        \Return ONE\_BINDING\;
+    }
+    \Case{$A [\land, \lor] B$}{
+        \Return $compare(classify(A), classify(B))$\;
+    }
+    \Case{$\lnot A$}{
+        \Return $classify(A).complementary()$\;
+    }
+    \Case{$[\forall, \exists]A$}{
+        $sub := \varphi$\;
+        $connective := \text{connective of } \varphi$\;
+        \Repeat{$connective \notin \{\forall, \exists\}$}{
+            $sub := \text{subformula of sub}$\;
+            $connective := \text{connective of sub}$\;
+        }
+        $(fragment, \_) := innerClassify(sub)$\;
+        \Return $fragment$\;
+    }
+
+    \Case{$A \Leftrightarrow B$}{
+        \Return $compare(classify(A \Rightarrow B), classify(B \Rightarrow A))$\;
+    }
+    \Case{$A \oplus B$}{
+        \Return $classify(A \Leftrightarrow B).complementary()$\;
+    }
+    \Case{$A \Rightarrow B$}{
+        \Return $compare(classify(\lnot A), classify(B))$\;
+    }
+}
+\end{algorithm}
+
+
+\begin{algorithm}
+    \caption{Classificatore interno}
+    \KwSty{Firma:}{ innerClassify($\varphi$)}
+    \KwIn{$\varphi$ Una formula rettificata}
+    \KwOut{Una coppia (Fragment, Literal)}
+
+
+\Switch{$\varphi$}{
+    \Case{$Literal \; l$}{
+        \Return $(ONE\_BINDING, l)$\;
+    }
+    \Case{$A [\land, \lor] B$}{
+        \Return $innerCompare(innerClassify(A), innerClassify(B), \text{connective of } \varphi)$\;
+    }
+    \Case{$\lnot A$}{
+        \Return $innerClassify(A).complementary()$\;
+    }
+    \Case{$A [\Rightarrow, \Leftrightarrow, \oplus] B$}{
+        \Return $innerCompare(innerClassify(A), innerClassify(B), \text{connective of } \varphi)$\;
+    }
+    \Else{
+        \Return $(None, null)$\;
+    }
+    
+}
+\end{algorithm}
+
+
+\begin{algorithm}
+    \caption{Compare esterno}
+    \KwSty{Firma:}{ compare($A, B$)}
+    \KwIn{$A, B$ due elementi dell'enumerazione Fragment}
+    \KwOut{Un elemento dell'enumerazione Fragment}
+\If{$A = B$}{
+    \Return $A$\;
+}
+\If{$One\_Binding \notin \{A, B\}$}{
+    \Return $None$\;
+}
+\Return $max(A, B)$\;
+
+\end{algorithm}
+
+
+\begin{algorithm}
+    \caption{Compare interno}
+    \KwSty{Firma:}{ innerCompare($A, B, con$)}
+    \KwIn{$A, B$ due coppie (Fragment, Literal), $con$ un connettivo}
+    \KwOut{Una coppia (Fragment, Literal)}
+
+
+
+    \Switch{A.first, B.first, con}{
+        \Case{One\_Binding, One\_Binding, \_\_}{
+            \If{$A.second$ has same terms of $B.second$}{
+                \Return $A$\;
+            } \ElseIf{$conn = \land$}{
+                \Return $(Conjunctive\_Binding, null)$\;
+            } \ElseIf{$conn = \lor$}{
+                \Return $(Disjunctive\_Binding, null)$\; 
+            }
+        }
+
+        \Case{[One\_Binding, Conjunctive\_Binding $\mid$ Conjunctive\_Binding, One\_Binding], $\land$}{
+            \Return (Conjunctive\_Binding, null)\;
+        }
+        \Case{[One\_Binding, Disjunctive\_Binding $\mid$ Disjunctive\_Binding, One\_Binding], $\lor$}{
+            \Return (Disjunctive\_Binding, null)\;
+        }
+
+        \Case{Conjunctive\_Binding, Conjunctive\_Binding, $\land$}{
+            \Return (Conjunctive\_Binding, null)\;
+        }
+        \Case{Disjunctive\_Binding, Disjunctive\_Binding, $\lor$}{
+            \Return (Disjunctive\_Binding, null)\;
+        }
+    }
+
+    \Return $(None, null)$\;
+\end{algorithm}
+
+
 \end{document}
+
