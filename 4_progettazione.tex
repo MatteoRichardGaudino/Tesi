@@ -15,9 +15,99 @@ L'algoritmo di decisione, la classificazione, Il preprocessing
     \label{fig:preprocessing}
 \end{figure}
 
-\subsection{Boolean Top Formula}
-\subsection{Forall-And}
-\subsection{SAT-Clausification}
+
+\begin{algorithm}[H]
+    \caption{Top Boolean Formula}
+    \KwSty{Firma:}{ topBooleanFormula($\varphi$)}\\
+    \KwIn{$\varphi$ una formula rettificata}
+    \KwOut{Una formula ground}
+\Switch{$\varphi$}{
+
+\Case{Literal l}{
+    \Return new AtomicFormula(l)\;
+}
+\Case{A$[\land, \lor]$B}{
+    \Return new JunctionFormula(topBooleanFormula(A), connective of $\varphi$, topBooleanFormula(B))\;
+}
+\Case{$\lnot$A}{
+    \Return new NegatedFormula(topBooleanFormula(A))\;
+}
+\Case{$[\forall, \exists]$A}{
+    $b = newBooleanBinding()$\;
+    $bindingFormulas[b] := \varphi$\;
+    \Return new AtomicFormula(b)\;
+}
+
+\Case{A$[\Leftrightarrow, \Rightarrow, \oplus]$B}{
+    \Return new BinaryFormula(A, connective of $\varphi$, B)\;
+}
+}
+\end{algorithm}
+
+
+Dopo la nnf ci sono alcuni boolean Binding che sono stati negati.
+va aggiunta nella mappa la formula negata
+
+\ForEach{$l \in literals(\varphi)$}{
+    \If{$\lnot$l.polarity()}{
+        \textbf{continue}
+    } 
+    $positiveFormula := bindingFormulas[positiveLiteral(l)]$\; \\
+    $bindingFormulas[l] := new NegatedFormula(positiveFormula)$\;
+}
+
+Mentre per ogni letterale ground di $\varphi$ che non è un booleanBinding
+si aggiunge alla mappa bindingClauses la satClausola composta solamente 
+dal satLetterale del letterale.
+
+\ForEach{$l \in literals(\varphi)$}{
+    \If{$l$ is not a booleanBinding}{
+        $bindingClauses[l] := new SatClause\{toSat(l)\}$\;
+    }
+}
+
+A questo punto le formule della mappa bindingFormulas vanno trasformate in NNF,Skolemizzate e SatClausificate. 
+Ogni booleanBinding è associato ad una formula del frammento ConjunctiveBinding,
+per questo dopo la skolemizzazione il quantificatore universale viene distribuito sull'and per ottenere le sottoformule del frammento OneBinding.
+Per ogni sottoformula OneBinding viene creato un nuovo letterale, che verrà chiamato LiteralBinding, in rappresentaza della sottoformula.
+Il nuovo letterale avrà gli stessi termini del letterale più a sinistra della sottoformula (che sono gli stessi di tutti i letterali della sottoformula).
+Successivamente la formula viene SatClausificata. Si aggiunge alla mappa satClauses la coppia composta dal nuovo LiteralBinding e le satClausole della sottoformula.
+Alla mappa literalToBooleanBindings viene aggiunta la coppia composta dal nuovo LiteralBinding e il booleanBinding associato mentre alla mappa
+booleanBindingToLiteral viene aggiunta la coppia composta dal booleanBinding e la lista dei LiteralBinding che rappresentano le sottoformule della formula originale.  
+
+
+\While{bindingFormulas $\neq \emptyset$}{
+    $(booleanBinding, formula) := bindingFormulas.pop()$\;\\
+    $formula := nnf(formula)$\;\\
+    $formula := skolemize(formula)$\;\\
+    $toDo := \emptyset$\;\\
+
+    \If{formula is ConjunctiveBinding}{
+        $formula := distributeForAll(formula)$\;\\
+        "Add each subformula to the todo list"\;
+    } \Else{
+        toDo.add(formula)\;
+    }
+
+    $literalBindings := \emptyset$\;
+    \While{todo $\neq \emptyset$}{
+        $subformula := todo.pop()$\;\\
+        $literalBinding := newLiteralBinding(subformula.mostLeftLiteral())$\;\\
+        $clauses := SatClausifyBindingFormula(subFormula)$\;\\
+
+        $satClauses[literalBinding] := clauses$\;\\
+        $literalToBooleanBindings[literalBinding] := booleanBinding$\;\\
+        $literalBindings.add(literalBinding)$\;\\
+    }
+    $booleanBindingToLiteral[booleanBinding] := literalBindings$\;
+}
+
+La funzione SatClausifyBindingFormula è una funzione che prende in input una formula
+la clausifica e converte tutte le clausole in SatClausole in modo che ogni satLetterale ha lo stesso indice del funtore del predicato associato.
+Questo è differente da quello che viene fatto dalla classe Sat2Fo che associa ogni puntatore a letterale ad un nuovo SatLetterale con un nuovo indice arbitrario.
+A questo punto la formula esterna (quella generata da topBooleanFormula) viene SatClausificata con il metodo standard tramite la classe Sat2Fo.
+
+
 
 \section{Procedura di Decisione}
 \begin{figure}[H]
