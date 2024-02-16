@@ -40,19 +40,6 @@ L'algoritmo di decisione, la classificazione, Il preprocessing
     \KwOut{$\top$ o $\bot$}
     \KwSty{GlobalData: }{ S una mappa da letterali a bool}
 
-%     if(_s[literal] != 0)
-%     return true;
-%   if (literal->ground()) {
-%     return _groundLiteralMus(literal);
-%   }
-
-%   _s[literal] = 1;
-%   LiteralList* l = LiteralList::empty();
-%   bool res = _musV2(literal, l);
-%   _s[literal] = -1;
-%   delete l;
-%   return res;
-
 \If{$S[literal]$}{
     \Return $\top$\;
 }
@@ -61,15 +48,167 @@ L'algoritmo di decisione, la classificazione, Il preprocessing
 }
 
 $S[literal] = \top$\;
-$l := \emptyset$\;
-$res := mus(literal, l)$\;
+$res := mus(literal, \emptyset)$\;
 $S[literal] = \bot$\;
 \Return $res$\;
 \end{algorithm}
 
 
+\begin{algorithm}[H]
+    \caption{Maximal Unifiable Subsets}
+    \KwSty{Firma:}{ mus($literal$, $FtoFree$)}\\
+    \KwIn{$literal$ un puntatore ad un letterale, $FtoFree$ un puntatore ad una lista di letterali}
+    \KwOut{$\top$ o $\bot$}
+    \KwSty{GlobalData: }{ \textbf{S} una mappa da letterali a interi, \textbf{fun} una funzione da lista di letterali a bool, \textbf{tree} un SubstitutionTree}
+
+$isMax := \top$\;
+$uIt = tree.getUnifications(query: literal, retrieveSubstitutions: true)$\;
+$toFree := \emptyset$\;
+
+\While{$uIt.hasNext()$}{
+    $(u, \sigma) := uIt.next()$\;
+    \If{$S[u] = 0$}{
+        $S[u] = 1$\;
+
+        $l := literal^\sigma$\;
+        \If{$l = literal$} {
+            $u' := u^\sigma$\;
+            \If{$u' = u$}{
+                $FtoFree := FtoFree \cup \{u\}$\;
+            } \Else{
+                $toFree := toFree \cup \{u\}$\;
+            }
+        }
+        \Else{
+            $isMax = \bot$\;
+            \If{$\neg mus(l, toFree)$}{
+                \Return $\bot$\;
+            }
+            $S[u] = -1$\;
+            $toFree := toFree \cup \{u\}$\;
+        }
+    }
+}
+\If{$isMax$}{
+    \If{$\neg fun(\{x \mid S[x] =1\})$}{
+        \Return $\bot$\;
+    }
+}
+\While{$toFree \neq \emptyset$}{
+    $S[toFree.pop()] = 0$\;
+}
+\Return $\top$\;
+\end{algorithm}
+
+\begin{algorithm}[H]
+    \caption{Maximal Unifiable Subsets Ground}
+    \KwSty{Firma:}{ groundMus($literal$)}\\
+    \KwIn{$literal$ un puntatore ad un letterale ground}
+    \KwOut{$\top$ o $\bot$}
+    \KwSty{GlobalData: }{ \textbf{S} una mappa da letterali a interi, \textbf{fun} una funzione da lista di letterali a bool, \textbf{tree} un SubstitutionTree}
+
+\If{$S[literal] \neq 0$}{
+    \Return $\top$\;
+}
+$uIt = tree.getUnifications(query: literal, retrieveSubstitutions: true)$\;
+$solution := \emptyset$\;
+
+\While {uIt.hasNext()} {
+    $(u, \sigma) := uIt.next()$\;
+    \If{$S[u] = 0$} {
+        \If{u is ground}{
+            $S[u] = -1$\;
+        }
+        $solution := solution \cup \{u\}$\;
+    }
+}
+\Return $fun(solution)$\;
+\end{algorithm}
+
 \subsection{Algoritmo Finale}
 
+\begin{algorithm}[H]
+    \caption{Algoritmo di decisione}
+    \KwSty{Firma:}{ solve(prp)}\\
+    \KwIn{$prp$ il problema pre-processato}
+    \KwOut{$\top$ o $\bot$}
+
+$satSolver := newSatSolver()$\;
+$satSolver.addClauses(prp.clauses)$\;
+
+\While{$satSolver.solve() = SATISFIABLE$}{
+    $res := \top$\;
+    $implicants := getImplicants(satSolver, prp)$\;
+    $implicants := sortImplicants(implicants)$\;
+    \If{implicants contains only ground Literals}{
+        \Return $\top$\;
+    }
+
+    $agIt := ArityGroupIterator(implicants)$\;
+    \While{res And agIt.hasNext()}{
+        % $gropu := agIt.next()$\;
+        % $tree := buildSubstitutionTree(group)$\;
+        % $S := emptyMap: LiteralSet \rightarrow bool$\;
+        % "Fill S with 0 foreach literal in group"\;
+        
+        $maximalUnifiableSubsets := SetupMus(group, internalSat)$\;
+
+        \ForEach{$lit \in group$}{
+            \If{$\lnot maximalUnifiableSubsets.mus(lit)$}{
+                $res := \bot$\;
+                $blockModel(maximalUnifiableSubsets.getSolution())$\;
+                \textbf{Break}\;
+            }
+        }
+
+        \If{$res = \top$}{
+            \Return $\top$\;
+        }
+
+    }
+
+}
+\Return $\bot$\;
+\end{algorithm}
+
+
+\begin{algorithm}[H]
+    \caption{Sat interna}
+    \KwSty{Firma:}{ internalSat(literals)}\\
+    \KwIn{$literals$ una lista di letterali}
+    \KwOut{$\top$ o $\bot$}
+\If{literals.length = 1 And getSatClauses(literals.top()).length = 1}{
+    \Return $\top$\;
+}
+
+$satSolver := newSatSolver()$\;
+\ForEach{$l \in literals$}{
+    $satSolver.addClause(getSatClauses(l))$\;
+}
+
+\Return $satSolver.solve() = SATISFIABLE$\;
+\end{algorithm}
+
+\begin{algorithm}[H]
+    \caption{getImplicants}
+    \KwSty{Firma:}{ getImplicants(solver, prp)}\\
+    \KwIn{$solver$ un sat solver, $prp$ il problema pre-processato}
+    \KwOut{Una lista letterali}
+
+$implicants := \emptyset$\;
+\ForEach{$l \in prp.literals()$}{
+    $satL := prp.toSat(l)$\;
+    \If{$solver.trueInAssignment(satL)$}{
+        \If{prp.isBooleanBinding(l)}{
+            $implicants := implicants \cup prp.getLiteralBindings(l)$\;
+        }
+        \Else{
+            $implicants := implicants \cup \{l\}$\;
+        }
+    }
+}
+\Return $implicants$\;
+\end{algorithm}
 
 
 \section{Algoritmo di Classificazione}
