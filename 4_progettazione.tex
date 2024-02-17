@@ -447,11 +447,44 @@ Che crea internamente una bi-mappa che associa ogni satletterale ad un letterale
     \label{fig:algoritmo_decisione}
 \end{figure}
 
-\subsection{Implicants Sorting}
-\subsection{Maximal Unifiable Subsets}
+In questa sezione verrà descritta l'implementazione dell'algoritmo di decisione \ref{alg:1b}
+per frammenti Binding descritto nel capitolo \ref{chap:binding}.
+L'algoritmo è composto da tre parti principali: la ricerca degli implicanti,
+la ricerca di tutti i sottoinsiemi unificabili e la ricerca di un assegnamento proposizionale 
+che soddisfi la congiunzione della conversione booleana dei sottoinsiemi unificabili.
+Da questo momento si assuma di avere una formula preprocessata con tutte le strutture ausiliarie come descritto nella sezione precedente.
+
+La ricerca degli implicanti è la parte più facile da implementare (sat esterna). 
+Data la FBE SatClausificata è sufficiente utilizzare il satSolver integrato in Vampire ed estrapolarne una assegnazione.
+Dopo aver ottenuto l'insieme degli implicanti proposizionali se la sua relativa 
+formula del primo ordine è insoddisfacibile allora è sufficiente creare una clausola bloccante e cercare un nuovo assegnamento.
+Se non sono disponibili nuovi assegnamenti allora la formula originale è insoddisfacibile.
+
+La ricerca di tutti i sottoinsiemi unificabili è senza dubbio la parte più complessa dell'algoritmo.
+L'approccio utilizzato nell'algoritmo \ref{alg:1b} è troppo astratto e non utilizzabile nella pratica.
+Anche il solo problema di iterare su tutti i sottoinsiemi di un insieme è un problema non trivale.
+Vanno quindi necessariamente fatti dei tagli nello spazio di ricerca.
+La prima osservazione che si può fare è che se un insieme di letterali è unificabile allora i letterali hanno tutti la stessa arità.
+È quindi possibile ordinare l'insieme di implicanti in base all'arità e ricercare per ogni 'Gruppo di Arità' tutti i sottoinsiemi unificabili.
+Già in questo modo si riduce notevolmente lo spazio di ricerca eliminando tutti quei sottoinsiemi composti da letterali di arità diversa.
+La seconda osservazione è che dati due sottoinsiemi $U' \subseteq U$ se la congiunzione della conversione booleana dei letterali di $U$ è 
+soddisfacibile allora lo sarà anche quella di $U'$. 
+Questo riduce ulteriormente lo spazio di ricerca ai soli sottoinsiemi massimali unificabili.
+Sfortunatamente la ricerca di tutti i sottoinsiemi massimali unificabili (Maximal Unifiable Subsets / MUS) è un problema NP-Completo così come 
+il suo problema complementare cioè il problema di ricercare tutti i sottoinsiemi minimali non unificabili (minimal non unifiable subsets / mnus).
+Per questo motivo è stato creato un algoritmo euristico meno restrittivo che itera almeno su tutti i sottoinsiemi massimali
+non escludendo però la possibilità di trovare anche qualche sottoinsieme non massimale.
+
+Dopo aver ottenuto un insieme di $\tau$-Binding unificabili l'algoritmo procede con la ricerca di un 
+assegnamento proposizionale che soddisfi la congiunzione della conversione booleana dei sottoinsiemi unificabili (sat interna).
+Anche in questo caso il problema è molto semplice. Ogni $\tau$-Binding è rappresentato da un bindingLiteral creato nella fase di preprocessing e
+ogni bindingLiteral è associato ad un insieme di satClausole che rappresentano la conversione booleana citata sopra. 
+Grazie a questa indicizzazione è possibile utilizzare il satSolver integrato per verificare la soddisfacibilità.
 
 
-\begin{algorithm}[H]
+\subsubsection{Maximal Unifiable Subsets}
+
+\begin{algorithm}[H] \label{alg:mus_call}
     \caption{Maximal Unifiable Subsets}
     \KwSty{Firma:}{ mus($literal$)}\\
     \KwIn{$literal$ un puntatore ad un letterale}
@@ -472,7 +505,7 @@ $S[literal] = \bot$\;
 \end{algorithm}
 
 
-\begin{algorithm}[H]
+\begin{algorithm}[H] \label{alg:mus}
     \caption{Maximal Unifiable Subsets}
     \KwSty{Firma:}{ mus($literal$, $FtoFree$)}\\
     \KwIn{$literal$ un puntatore ad un letterale, $FtoFree$ un puntatore ad una lista di letterali}
@@ -518,7 +551,7 @@ $toFree := \emptyset$\;
 \Return $\top$\;
 \end{algorithm}
 
-\begin{algorithm}[H]
+\begin{algorithm}[H] \label{alg:groundMus}
     \caption{Maximal Unifiable Subsets Ground}
     \KwSty{Firma:}{ groundMus($literal$)}\\
     \KwIn{$literal$ un puntatore ad un letterale ground}
@@ -543,9 +576,9 @@ $solution := \emptyset$\;
 \Return $fun(solution)$\;
 \end{algorithm}
 
-\subsection{Algoritmo Finale}
+\subsubsection{Procedura di decisione}
 
-\begin{algorithm}[H]
+\begin{algorithm}[H] \label{alg:1b_impl}
     \caption{Algoritmo di decisione}
     \KwSty{Firma:}{ solve(prp)}\\
     \KwIn{$prp$ il problema pre-processato}
@@ -589,25 +622,12 @@ $satSolver.addClauses(prp.clauses)$\;
 \Return $\bot$\;
 \end{algorithm}
 
+Dato il problema preprocessato l'algoritmo comincia impostando il satSolver
+con le satClausole ottenute nella fase di preprocessing. 
+Se la formula è soddisfacibile allora si recupera l'insieme degli implicanti
+tramite la funzione getImplicants \ref{alg:getImplicants}.
 
-\begin{algorithm}[H]
-    \caption{Sat interna}
-    \KwSty{Firma:}{ internalSat(literals)}\\
-    \KwIn{$literals$ una lista di letterali}
-    \KwOut{$\top$ o $\bot$}
-\If{literals.length = 1 And getSatClauses(literals.top()).length = 1}{
-    \Return $\top$\;
-}
-
-$satSolver := newSatSolver()$\;
-\ForEach{$l \in literals$}{
-    $satSolver.addClause(getSatClauses(l))$\;
-}
-
-\Return $satSolver.solve() = SATISFIABLE$\;
-\end{algorithm}
-
-\begin{algorithm}[H]
+\begin{algorithm}[H] \label{alg:getImplicants}
     \caption{getImplicants}
     \KwSty{Firma:}{ getImplicants(solver, prp)}\\
     \KwIn{$solver$ un sat solver, $prp$ il problema pre-processato}
@@ -627,6 +647,57 @@ $implicants := \emptyset$\;
 }
 \Return $implicants$\;
 \end{algorithm}
+
+Per ogni letterale del problema 
+viene recuperato il corrispondente satLetterale.
+Se il satLetterale è soddisfatto dall'assegnamento allora 
+se il letterale originale non è un booleanBinding viene aggiunto all'insieme di implicanti,
+altrimenti vengono aggiunti tutti i literalBinding associati al booleanBinding.
+
+Dopo aver ottenuto l'insieme di implicanti, l'insieme viene ordinato in base all'arità dei letterali.
+La funzione sortImplicants può essere estesa aggiungendo varie euristiche.
+La prima euristica che è stata implementata è quella di spingere i letterali ground all'inizio di ogni gruppo di arità in modo da utilizzare 
+l'algoritmo \ref{alg:groundMus} per ridurre il numero di chiamate ricorsive che verrebbero fatte dall'algoritmo \ref{alg:mus}.
+La seconda euristica è quella di ordinare i letterali in base ai sottotermini in modo da avere vicino sequenze di letterali
+che hanno stessi termini per sfruttare l'ottimizzazione vista nell'algoritmo \ref{alg:mus}.
+
+Se l'insieme di implicanti contiene solo letterali ground (che non sono literalBindings) allora la formula è soddisfacibile
+perchè l'assegnamento per la formula esterna è valido anche per le formule interne e l'algoritmo termina restituendo $\top$.
+
+Altrimenti per ogni gruppo di arità si imposta l'ambiente per la ricerca dei mus
+e viene chiamata la funzione mus \ref{alg:mus_call} per ogni letterale del gruppo.
+Se una di queste chiamate restituisce $\bot$ allora la formula FO corrispondente 
+all'assegnamento booleano trovato è insoddisfacibile e si procede con la ricerca di un nuovo assegnamento.
+Se tutte le chiamate restituiscono $\top$ allora la formula è soddisfacibile e l'algoritmo termina restituendo $\top$.
+Se non sono disponibili nuovi assegnamenti allora la formula è insoddisfacibile e l'algoritmo termina restituendo $\bot$.
+
+\begin{algorithm}[H] \label{alg:internalSat}
+    \caption{Sat interna}
+    \KwSty{Firma:}{ internalSat(literals)}\\
+    \KwIn{$literals$ una lista di letterali}
+    \KwOut{$\top$ o $\bot$}
+\If{literals.length = 1 And getSatClauses(literals.top()).length = 1}{
+    \Return $\top$\;
+}
+
+$satSolver := newSatSolver()$\;
+\ForEach{$l \in literals$}{
+    $satSolver.addClause(getSatClauses(l))$\;
+}
+
+\Return $satSolver.solve() = SATISFIABLE$\;
+\end{algorithm}
+
+La funzione internalSat viene chiamata ogni volta che la funzione \ref{alg:mus}
+trova un nuovo mus. 
+Se il mus è composto da un solo letterale e la lista di satClausole associata è composta 
+da una sola clausola allora la formula non può entrare in contraddizione, di conseguenza 
+è soddisfacibile e la funzione restituisce $\top$, evitando di impostare il satSolver.
+In caso contrario viene impostato il satSolver con le clausole associate
+ai literalBindings dalla mappa satClauses e viene chiamato il metodo solve.
+La funzione restituisce $\top$ se il satSolver restituisce SATISFIABLE altrimenti $\bot$.
+
+
 
 
 

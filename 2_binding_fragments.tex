@@ -1,7 +1,7 @@
 \documentclass[./main.tex]{subfiles}
 
 \begin{document}
-\chapter{Algoritmo di decisione di Frammenti Binding}
+\chapter{Algoritmo di decisione di Frammenti Binding} \label{chap:binding}
 Nella sezione \ref{sec:sat_val}, 
 sono stati esaminati i teoremi di Gödel e Church, 
 mentre nella sezione \ref{sec:resolution} sono state viste alcune delle loro conseguenze. 
@@ -134,7 +134,7 @@ A questo punto è possibile enunciare il teorema di caratterizzazione della sodd
 Dal teorema appena descritto si estrapola intuitivamente l'algoritmo per la soddisfacibilità delle formule del frammento:
 
 \begin{algorithm}[H]
-    \caption{Algoritmo per la soddisfacibilità del frammento $\forall$1B}
+    \caption{Algoritmo per la soddisfacibilità del frammento $\forall$1B} \label{alg:1b}
     \KwSty{Firma:}{ oneBindingAlgorithm($\varphi$)}
   
     \KwIn{$\varphi$ una formula $\forall$1B}
