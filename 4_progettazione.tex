@@ -484,25 +484,50 @@ Grazie a questa indicizzazione è possibile utilizzare il satSolver integrato pe
 
 \subsubsection{Maximal Unifiable Subsets}
 
+Per la ricerca dei mus è stato implementato un algoritmo ricorsivo che in modo incrementale costruisce un sottoinsieme di letterali unificabile.
+L'algoritmo sfrutta un SubstitutionTree per la ricerca degli unificatori e una mappa S che rappresenta la funzione caratteristica 
+dell'insieme soluzione. 
+In particolare per ogni letterale $x$ se $S[x] = 1$ allora fa parte della soluzione, se $S[x] = 0$ allora non fa parte della soluzione
+e infine se $S[x] = -1$ allora vuol dire che non fa parte della soluzione e deve essere escluso dalle ricerche future.
+Prima di iniziare la ricerca va impostato l'ambiente in modo tale che il SubstitutionTree contenga tutti i letterali 
+del gruppo di arità corrente e S mappi tutti i letterali a 0. 
+Viene fornita anche una funzione \textit{fun} che prende in input l'insieme soluzione e restituisce un booleano.
+La funzione \ref{alg:mus_call} è la funzione che inizia la catena di chiamate ricorsive. 
+% Prende in input un letterale e itera su (almeno) tutti i mus che contengono il letterale.
+
+
+
+
+% La ricerca termina o quando sono finiti tutti i sottoinsiemi disponibili e in questo caso la funzione \ref{alg:mus_call} restituisce $\top$
+% oppure appena la funzione \textit{fun} restituisce $\bot$ e in questo caso la funzione \ref{alg:mus_call} propaga il risultato restituendo $\bot$.
+
+
 \begin{algorithm}[H] \label{alg:mus_call}
     \caption{Maximal Unifiable Subsets}
     \KwSty{Firma:}{ mus($literal$)}\\
     \KwIn{$literal$ un puntatore ad un letterale}
     \KwOut{$\top$ o $\bot$}
-    \KwSty{GlobalData: }{ S una mappa da letterali a bool}
+    \KwSty{GlobalData: }{ S una mappa da letterali a interi}
 
-\If{$S[literal]$}{
+\If{$S[literal] \neq 0$}{
     \Return $\top$\;
 }
 \If{$literal$ is ground}{
     \Return $groundLiteralMus(literal)$\;
 }
 
-$S[literal] = \top$\;
+$S[literal] = 1$\;
 $res := mus(literal, \emptyset)$\;
-$S[literal] = \bot$\;
+$S[literal] = -1$\;
 \Return $res$\;
 \end{algorithm}
+
+Inizialmente verifica se il letterale è già stato esplorato e in quel caso restituisce $\top$.
+Se il letterale è ground allora chiama la funzione \ref{alg:groundMus} che è un'ottimizzazione pensata 
+per semplificare la ricerca con letterali ground.
+Se il letterale non è ground allora si inizia la vera e propria ricerca dei mus.
+Viene impostato il valore del letterale nella mappa S ad 1 in modo tale che faccia parte della soluzione 
+e chiama la funzione \ref{alg:mus} che prende in input il letterale e un insieme di letterali.
 
 
 \begin{algorithm}[H] \label{alg:mus}
@@ -551,6 +576,62 @@ $toFree := \emptyset$\;
 \Return $\top$\;
 \end{algorithm}
 
+La funzione comincia inizializzando la variabile $isMax$ a $\top$ che rappresenta il fatto che il sottoinsieme è massimale.
+Se non vengono effettuate chiamate ricorsive allora $isMax$ non viene modificato
+e viene chiamata la funzione \textit{fun} sull'insieme soluzione.
+Successivamente viene chiesto al SubstitutionTree di restituire un iteratore
+su tutti i letterali unificabili con il letterale in input.
+Viene inizializzata una lista $toFree$ che conterrà tutti gli elementi che 
+verranno bloccati su questo livello dell'albero delle chiamate ricorsive.
+
+Per capire meglio questo aspetto dell'algoritmo si consideri un insieme di 
+letterali $\{l_1, ... , l_n\}$. Un modo di ottenere tutti i mus di questo insieme,
+che è anche il modo che è stato implementato,
+è quello di cercare tutti i mus che contengono $l_1$, tutti i mus che contengono $l_2$ e così via.
+Si supponga di aver già trovato tutti i mus che contengono $l_1$ e di 
+voler cercare tutti i mus che contengono $l_2$. 
+Se l'algoritmo rileva che $l_2$ è unificabile con $l_1$ tramite la sostituzione $\sigma$,
+dovrebbe inserire $l_1$ nella soluzione e cercare tutti i mus
+che contengono $l_2^\sigma$ e così via.
+Ma si può notare che mus di questo tipo sono già stati esplorati quando 
+si cercavano i mus che contenevano $l_1$.
+Per questo motivo in modo da evitare di ripetere del lavoro già svolto,
+alla fine della ricerca dei mus che contengono $l_1$, il letterale viene
+bloccato ($S[l_1] = -1$) e viene aggiunto ad una lista $toFree$.
+In generale per ogni $l_x$ vengono cercati tutti i mus che contengono $l_x$
+escludendo dalla ricerca i letterali $l_y$ con $y < x$.
+Una volta arrivati ad $l_n$ si liberano ($S[l_{(...)}] = 0$) tutti i letterali bloccati in $toFree$.
+
+Tornando alla descrizione dell'algoritmo, dopo aver inizializzato la lista $toFree$
+si itera su tutti i letterali che unificano con il letterale in input $literal$.
+Per ogni letterale $u$ se è già contenuto nella soluzione, o è stato bloccato, si ignora,
+altrimenti viene aggiunto alla soluzione.
+Si calcola il letterale $l = literal^\sigma$ ottenuto applicando la sostituzione
+$\sigma$ al letterale $literal$. 
+Se il letterale $l$ è uguale a $literal$, cioè la sostituzione non ha 
+apportato nessun cambiamento, 
+allora si evita di effettuare una chiamata ricorsiva su $l$ in quanto è possibile
+utilizzare lo stesso iteratore di $literal$. 
+Se anche $u^\sigma$ è uguale a $u$ allora viene aggiunto alla lista $FtoFree$,
+che sarebbe la lista $toFree$ del livello superiore in modo tale da 
+essere rimosso dalla soluzione solo alla fine dell'esecuzione del livello superiore
+(questo perchè $u$ e literal hanno gli stessi termini quindi tutti i mus che contengono $u$ contengono anche $literal$).
+In caso contrario viene aggiunto alla lista $toFree$.
+
+Se il letterale $l$ è diverso da $literal$ non è detto che la soluzione corrente sia massimale,
+quindi si imposta $isMax$ a $\bot$ e viene effettuata una chiamata ricorsiva dando come parametri $l$
+e la lista $toFree$. 
+Nel caso la chiamata ricorsiva restituisca $\bot$ allora la funzione propaga il risultato negativo restituendo $\bot$.
+Dopo la chiamata ricorsiva il letterale $u$ viene rimosso dalla soluzione e bloccato per 
+questo livello della ricorsione. Viene poi aggiunto alla lista $toFree$ per essere sbloccato 
+alla fine dell'esecuzione del livello corrente.
+
+Alla fine dell'iterazione sui letterali unificabili se $isMax$ è $\top$ 
+allora si compone la soluzione e viene chiamata la funzione \textit{fun}.
+Se \textit{fun} restituisce $\bot$ allora si restituisce $\bot$.
+Altrimenti si liberano i letterali del livello corrente e si restituisce $\top$.
+
+
 \begin{algorithm}[H] \label{alg:groundMus}
     \caption{Maximal Unifiable Subsets Ground}
     \KwSty{Firma:}{ groundMus($literal$)}\\
@@ -575,6 +656,11 @@ $solution := \emptyset$\;
 }
 \Return $fun(solution)$\;
 \end{algorithm}
+
+La funzione \ref{alg:groundMus} è un'ottimizzazione della funzione \ref{alg:mus} per letterali ground.
+Si consideri un letterale ground $g$. Per qualunque sostituzione di variabili $\sigma$ 
+il letterale $g^\sigma$ sarà sempre uguale a $g$. Quindi per qualunque letterale $u$ se $u^\sigma = g^\sigma$ allora $u^\sigma = g$.
+Ciò significa che l'unico mus di $g$ è proprio l'insieme di tutti i letterali che unificano con $g$.
 
 \subsubsection{Procedura di decisione}
 
