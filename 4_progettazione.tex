@@ -393,11 +393,15 @@ $toFree := \emptyset$\;
         }
         \Else{
             $isMax = \bot$\;
-            \If{$\neg mus(l, toFree)$}{
+            $tmpToFree := \emptyset$\;
+            \If{$\neg mus(l, tmpToFree)$}{
                 \Return $\bot$\;
             }
             $S[u] = -1$\;
-            $toFree := toFree \cup \{u\}$\;
+            \ForEach{$i \in tmpToFree$}{
+                $S[i] = -1$\;
+            }
+            $toFree := toFree \cup \{u\} \cup tmpToFree$\;
         }
     }
 }
@@ -448,24 +452,26 @@ Se il letterale $l$ è uguale a $literal$, cioè la sostituzione non ha
 apportato nessun cambiamento, 
 allora si evita di effettuare una chiamata ricorsiva su $l$ in quanto è possibile
 utilizzare lo stesso iteratore di $literal$. 
-Se anche $u^\sigma$ è uguale a $u$ allora viene aggiunto alla lista $FtoFree$,
-che sarebbe la lista $toFree$ del livello superiore in modo tale da 
-essere rimosso dalla soluzione solo alla fine dell'esecuzione del livello superiore
-(questo perchè $u$ e literal hanno gli stessi termini quindi tutti i mus che contengono $u$ contengono anche $literal$).
-In caso contrario viene aggiunto alla lista $toFree$.
+Se anche $u^\sigma$ è uguale a $u$ allora viene aggiunto alla lista $FtoFree$ passata in input.
+Questo perchè $u$ ha esattamente gli stessi termini di $literal$ quindi tutti i mus che contengono $u$ contengono anche $literal$.
+$u$ va quindi rimosso/bloccato/sbloccato dalla soluzione esattamente quando viene rimosso/bloccato/sbloccato il letterale
+con cui è stata fatta l'unificazione al livello superiore che ha poi generato $literal$.
+In caso contrario viene aggiunto alla lista $toFree$ per essere rimosso alla fine dell'esecuzione del livello corrente.
 
 Se il letterale $l$ è diverso da $literal$ non è detto che la soluzione corrente sia massimale,
 quindi si imposta $isMax$ a $\bot$ e viene effettuata una chiamata ricorsiva dando come parametri $l$
-e la lista $toFree$. 
+e una lista temporanea $tmpToFree$. 
 Nel caso la chiamata ricorsiva restituisca $\bot$ allora la funzione propaga il risultato negativo restituendo $\bot$.
 Dopo la chiamata ricorsiva il letterale $u$ viene rimosso dalla soluzione e bloccato per 
 questo livello della ricorsione. Viene poi aggiunto alla lista $toFree$ per essere sbloccato 
 alla fine dell'esecuzione del livello corrente.
+Vengono anche bloccati tutti i letterali restituiti dalla chiamata ricorsiva tramite la lista $tmpToFree$ e aggiunti a $toFree$
+per essere sbloccati alla fine dell'esecuzione del livello corrente.
 
 Alla fine dell'iterazione sui letterali unificabili se $isMax$ è $\top$ 
 allora si compone la soluzione e viene chiamata la funzione \textit{fun}.
 Se \textit{fun} restituisce $\bot$ allora si restituisce $\bot$.
-Altrimenti si liberano i letterali del livello corrente e si restituisce $\top$.
+Altrimenti si liberano i letterali della lista $toFree$ e si restituisce $\top$.
 
 
 \begin{algorithm}[H] \label{alg:groundMus}
@@ -497,6 +503,12 @@ La funzione \ref{alg:groundMus} è un'ottimizzazione della funzione \ref{alg:mus
 Si consideri un letterale ground $g$. Per qualunque sostituzione di variabili $\sigma$ 
 il letterale $g^\sigma$ sarà sempre uguale a $g$. Quindi per qualunque letterale $u$ se $u^\sigma = g^\sigma$ allora $u^\sigma = g$.
 Ciò significa che l'unico mus di $g$ è proprio l'insieme di tutti i letterali che unificano con $g$.
+Il costo di questa funzione è pari al costo della visita nel SubstitutionTree che viene effettuata con la funzione \textit{getUnifications}
+e l'iteratore $uit$,
+più il costo della chiamata della funzione \textit{fun}.
+In linea di massima molto più conveniente rispetto alla funzione \ref{alg:mus} che può effettuare potenzialmente un numero esponenziale 
+di chiamate ricorsive. 
+
 
 \subsubsection{Procedura di decisione}
 
@@ -631,14 +643,13 @@ Il blocco numerato con (1) nell'algoritmo \ref{alg:mus}.
 Inoltre nell'algoritmo \ref{alg:1b_impl} il blocco numerato con (1) era posto 
 fuori dal ciclo while e veniva controllata se tutta la formula fosse ground.
 In tal caso veniva restituito direttamente il valore della funzione solve del SatSolver.
+Il sorting degli implicanti nell'algoritmo naif è effettuato solo in base all'arità dei letterali, mentre nell'algoritmo ottimizzato
+vengono spinti i letterali ground all'inizio di ogni gruppo di arità e vengono ordinati in base ai sottotermini.
 Come ultima modifica, sempre sull'algoritmo \ref{alg:1b_impl},
 la riga numerata con (2) era precedentemente posta dopo il blocco numerato con (3)
 e veniva usato tutto l'insieme di implicanti per generare la clausola bloccante
-al posto dell'insieme risultato dalla funzione mus. 
-
-
-
-
+al posto dell'insieme risultato dalla funzione mus.
+Maggiori informazioni sulle motivazioni e sull'effetto di queste modifiche verranno discusse nel prossimo capitolo.
 
 
 \section{Algoritmo di Classificazione}  \label{sec:classifier}
@@ -652,10 +663,10 @@ al posto dell'insieme risultato dalla funzione mus.
     \label{fig:classifier}
 \end{figure}
 
-La precondizione più importante per la correttezza dell'algoritmo di decisione è che la formula faccia parte del frammento $\forall1B$.
+La precondizione più importante per la correttezza dell'algoritmo di decisione è che la formula non processata faccia parte del frammento \cb.
 Per questo motivo è stato creato un classificatore in grado di stabilire se una formula è risolvibile o no dalla procedura.
 L'algoritmo non fa altro che verificare la forma sintattica della formula e capisce a quale grammatica della sezione \ref{sec:binding_taxonomy}
-appartiene. Per questo scopo sono state create due funzioni delle Classificatore Esterno (Algoritmo \ref{alg:classifier}) e Classificatore Interno (Algoritmo \ref{alg:innerClassifier}).
+appartiene. Per questo scopo sono state create due funzioni chiamate Classificatore Esterno (Algoritmo \ref{alg:classifier}) e Classificatore Interno (Algoritmo \ref{alg:innerClassifier}).
 La prima verifica la parte della formula senza quantificatori mentre la seconda verifica la parte interna ai quantificatori e confronta 
 i termini dei letterali. 
 Entrambi gli algoritmi hanno una struttura di visita dell'albero sintattico in postOrder e hanno una complessità lineare rispetto alla dimensione della formula.
