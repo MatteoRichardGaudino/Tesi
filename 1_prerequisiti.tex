@@ -227,7 +227,7 @@ In questo caso, per \textit{Naming} si intende la rinomina di sottoformule trami
 Per l'esempio precedente si assuma che $s_n$ sia un simbolo di costante non presente nella formula originale.
 Applicando il \textit{Naming} si ottiene la seguente formula:
 
-$$ (\varphi \lor s_n) \land (s_n \lor \psi)$$
+$$ (\varphi \lor s_n) \land (\lnot s_n \lor \psi)$$
 
 In questo modo, la clausificazione della formula genera solo $n + m$ clausole al costo dell'aggiunta di un nuovo simbolo di costante.
 Un discorso simile vale per formule con la doppia implicazione e lo xor, solo che in questo caso
@@ -887,7 +887,7 @@ Una descrizione più dettagliata di Otter verrà data nel capitolo \ref{chap:vam
 
 
 
-\section{Il formato TPTP}
+\section{Il formato TPTP} \label{sec:tptp_lang}
 In questa sezione verrà descritto il formato TPTP \cite{tptpLan} (Thousands of Problems for Theorem Provers) 
 per la rappresentazione di problemi di logica del primo ordine.
 TPTP è una nota libreria di problemi utilizzata per testare e valutare diversi ATP systems (Automatic Theorem Prover).
