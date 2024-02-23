@@ -1,5 +1,17 @@
 \documentclass[./main.tex]{subfiles}
 
+
+\newcommand{\grafico}[3]{
+    \begin{figure}[H]
+        \centering
+        \scalebox{0.7}{
+            \includegraphics{#1}
+        }
+        \caption{#2}
+        \label{#3}
+    \end{figure}
+}
+
 \begin{document}
 \chapter{Analisi Sperimentale}
 % ------------- La libreria TPTP -------------
@@ -105,7 +117,7 @@ Come regola di semplificazione è stata disattivata l'opzione \textit{-fs} (Forw
 clausole che sono sussunte da altre clausole durante la fase di \textit{Forward simplification} 
 (Una clausola $D$ è sussunta da una clausola $C$ se esiste una sostituzione $\sigma$ tale che 
 $C^\sigma \subseteq D$, clausole del genere vengono cercate dalla $fs$ e rimosse perchè ridondanti).
-È stata disattivata anche l'opzione \textit{-av} (AVATAR-Advanced Vampire Architecture
+È stata disattivata anche l'opzione \textit{-av} (AVATAR - Advanced Vampire Architecture
 for Theories and Resolution) che è un metodo SMT implementato in Vampire per lo splitting delle clausole.
 L'opzione \textit{-av} è stata disattivata dato che non si vuole che Vampire utilizzi metodi SMT per la risoluzione dei problemi.
 Il comando utilizzato per l'esecuzione di Vampire è quindi il seguente:
@@ -123,6 +135,29 @@ Macbook Pro 2018, 2.9 GHz 6-Core Intel Core i9, 16 GB 2400 MHz DDR4 sistema oper
 Gli esperimenti sono stati poi ripetuti su un computer Windows 11 con processore Intel Core i9-13900K e ram 32GB DDR5
 sul sottosistema Windows for Linux (WSL) e si sono ottenuti tempi di esecuzione, come da aspettativa, più bassi ma assolutamente coerenti,
 mentre per memoria i valori sono rimasti esattamente gli stessi.
+I tempi delle tabelle si riferiscono ai tempi rilevati dalla macro $Time\_Trace$ posta all'inizio dell'algoritmo Binding 
+e all'inizio del \textit{MainLoop} di Vampire escludendo quindi i tempi di parsing e preprocessing.
+Per una maggior accuratezza, i tempi sono stati calcolati come media di 5 esecuzioni.
+
+\subsubsection{One Binding}
+
+% -------- fof 1b naif
+\grafico{images/5_sperimentazione/time/1b/fof_1b_naif.png}{Tempo Vampire vs 1b naif, problemi fof}{fig:fof_1b_naif}
+\grafico{images/5_sperimentazione/mem/1b/fof_naif_mem.png}{Memoria Vampire vs 1b naif, problemi fof}{fig:fof_1b_naif_mem}
+
+% -------- cnf 1b naif
+\grafico{images/5_sperimentazione/time/1b/cnf_1b_naif.png}{Tempo Vampire vs 1b naif, problemi cnf}{fig:cnf_1b_naif}
+\grafico{images/5_sperimentazione/mem/1b/cnf_naif_1b_mem_.png}{Memoria Vampire vs 1b naif, problemi cnf}{fig:cnf_1b_naif}
+
+% -------- fof 1b
+\grafico{images/5_sperimentazione/time/1b/fof_1b.png}{Tempo Vampire vs 1b, problemi fof}{fig:fof_1b}
+\grafico{images/5_sperimentazione/mem/1b/fof_mem.png}{Memoria Vampire vs 1b, problemi fof}{fig:fof_1b}
+
+% -------- cnf 1b
+\grafico{images/5_sperimentazione/time/1b/cnf_1b.png}{Tempo Vampire vs 1b, problemi cnf}{fig:cnf_1b}
+\grafico{images/5_sperimentazione/mem/1b/cnf_1b_mem.png}{Memoria Vampire vs 1b, problemi cnf}{fig:cnf_1b}
+
+
 
 
 \section{Ottimizzazioni}
