@@ -353,7 +353,11 @@ La funzione \ref{alg:mus_call} è la funzione che inizia la catena di chiamate r
 }
 
 $S[literal] = 1$\;
-$res := mus(literal, \emptyset)$\;
+$tmpToFree := \emptyset$\;
+$res := mus(literal, tmpToFree)$\;
+\ForEach{$i \in tmpToFree$}{
+                $S[i] = -1$\;
+            }
 $S[literal] = -1$\;
 \Return $res$\;
 \end{algorithm}
