@@ -13,4 +13,58 @@
 
 % Descrizione dei capitoli successivi.
 
+Informatica e logica hanno sempre avuto molto in comune.
+Entrambe nascono in qualche modo per descrivere e/o imitare il cervello e il ragionamento umano. 
+Il sogno di Alan Turing infatti quello di "costruire un cervello" artificiale,
+così come il sogno di molti logici è quello di "formalizzare il ragionamento umano".
+Sebbene attualmente lo studio dell'intelligenza si basa principalmente su metodi di apprendimento 
+piuttosto che su deduzione automatica, la logica rimane comunque un linguaggio estremamente utile
+in grado di descrivere in modo preciso il linguaggio matematico.
+La dimostrazione automatica di teoremi è un'importante branca dell'informatica e della logica
+e trova largo utilizzo nell'ambito della verifica formale di software e hardware 
+e i sistemi ATP (Automated theorem proving) sono utilizzati come strumento di supporto 
+nella ricerca matematica per affinare o verificare dimostrazioni formali.
+%
+I primi tentativi di realizzare un sistema 
+di dimostrazione automatica risalgono agli anni '50,
+quando i ricercatori Allen Newell, Herbert A. Simon, and Cliff Shaw.
+Progettarono il primo dimostratore automatico il \textit{Logic Theorist}
+che, tramite varie euristiche, tentava di simulare il ragionamento umano. 
+Da quel momento la ricerca si è spostata su metodi più formali e rigorosi,
+meno human-friendly e più adatti ad essere eseguiti da un calcolatore.
+Gli studi moderni si basano principalmente sugli studi 
+del logico Herbrand e del metodo di Risoluzione di Robinson.
+% 
+Il problema della soddisfacibilità (SAT) è uno dei problemi più studiati in informatica.
+Il problema consiste del determinare se una formula è soddisfacibile o meno ossia 
+se esiste un'interpretazione che la rende vera.
+Il problema è decidibile per la logica proposizionale, ma diventa indecidibile
+per la logica del primo ordine.
+Per questo la ricerca si è spostata sulla ricerca di frammenti sintattici della logica del primo ordine
+decidibili rispetto al problema della soddisfacibilità.
+Tra questi vi sono i frammenti Binding che sono oggetto di studio di questa tesi.
+% 
+Questa tesi si propone di implementare l'algoritmo di soddisfacibilità per i frammenti Binding
+all'interno del sistema di dimostrazione automatica Vampire.
+% 
+Vampire è un moderno ATP creato da Andrei Voronkov e Alexandre Riazanov presso l'Università di Manchester.
+Uno dei suoi punti di forza `e l’efficienza, Il team di sviluppo infatti partecipa
+annualmente al CASC (The CADE ATP System Competition), una competizione tra sistemi ATP, e
+fino ad ora ha sempre vinto almeno in una categoria ogni anno.
+La sua implementazione è open-source e sviluppato in C++.
+% 
+La tesi è strutturata come segue:
+\begin{itemize}
+    \item Nel capitolo 1 verra data un'introduzione 
+    alla logica proposizionale e del primo ordine, al problema della soddisfacibilità,
+    ai teoremi di incompletezza di Gödel e al problema della dimostrazione automatica.
+    \item Nel capitolo 2 verranno presentati i frammenti Binding e l'algoritmo di decisione.
+    \item Nel capitolo 3 verranno descritte le componenti principali di Vampire con particolare attenzione
+    a quelli necessari per l'implementazione dell'algoritmo di decisione per i frammenti Binding.
+    \item Nel capitolo 4 verrà descritta l'implementazione dell'algoritmo di decisione per i frammenti Binding
+    \item Nel capitolo 5 verranno presentati i risultati sperimentali ed un confronto con Vampire standard.
+\end{itemize}
+
+
+
 \end{document}

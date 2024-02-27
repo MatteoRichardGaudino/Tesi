@@ -12,11 +12,11 @@ Verrà anche introdotto il problema della decisione, ovvero il problema di stabi
 e le principali tecniche ad alto livello che vengono utilizzate dai theorem prover moderni per risolvere questo problema.
 Nell'ultimo paragrafo del capitolo 
 verrà descritto in che modo le formule di logica del 
-primo ordine possono essere rappresentate in un formato di file, per poi essere 
+primo ordine possono essere rappresentate in un formato testuale, per poi essere 
 processate come input da un theorem prover. 
-Lo scopo di questo capitolo è quindi quello di accennare la teoria logica utilizzata nell'implementazione di vampire 
+Lo scopo di questo capitolo è quindi quello di accennare la teoria logica utilizzata nell'implementazione di Vampire 
 e della procedura di decisione per i Binding-Fragments.
-Non è tra gli obbiettivi dare una trattazione esaustiva sulla logica o in generale sulle varie teoria matematiche coinvolte, 
+Non è tra gli obbiettivi dare una trattazione esaustiva sulla logica o in generale sulle varie teorie matematiche coinvolte, 
 perciò verranno date per scontate nozioni di teoria degli insiemi,
 algebra, teoria della computazione e teoria dei linguaggi.
 
@@ -27,32 +27,32 @@ algebra, teoria della computazione e teoria dei linguaggi.
 La logica proposizionale è un ramo della logica formale che si occupa dello studio e della manipolazione delle proposizioni, 
 ovvero dichiarazioni che possono essere classificate come vere o false, ma non entrambe contemporaneamente (Principio di bivalenza).
 Essa fornisce un quadro formale per analizzare il ragionamento deduttivo basato su connettivi logici, come "e", "o", e "non".
-Questo strumento anche se incluso nella logica del primo ordine,
+Questo strumento, anche se incluso nella logica del primo ordine,
 rimane un pilastro fondamentale per lo studio svolto in questa tesi e quindi è necessario farne un'introduzione indipendente.
 
 % ---------------------- FORMULE ----------------------
 \subsection{Formule} \label{sec:sintassi_bool}
-Sia $\Sigma_s = \{s_1, s_2, ...\}$ un insieme di simboli di costante, 
+Sia $\Sigma_s = \{s_1, s_2, ...\}$ un insieme di simboli di proposizioni atomiche, 
 $\Sigma = \{ \land, \lor, \lnot, (, ), \top, \bot\} \cup \Sigma_s$ è detto alfabeto della logica proposizionale. 
 Con queste premesse si può definire come formule della logica proposizionale il linguaggio $F$ generato dalla
 grammatica Context Free seguente:
 $$
-\varphi  := \top \mid \bot \mid S \mid \lnot \varphi \mid (\varphi \land \varphi) \mid (\varphi \lor \varphi)
+\varphi  := \top \mid \bot \mid s \in \Sigma_s \mid \lnot \varphi \mid (\varphi \land \varphi) \mid (\varphi \lor \varphi)
 $$
 
-Dove $S \in \Sigma_s$ è un simbolo di costante. Con la funzione $const(\gamma) \rightarrow 2^{\Sigma_s}$ si indica la funzione che
-associa a ogni formula $\gamma$ l'insieme dei suoi simboli di costante. 
-Viene chiamato \textit{Letterale}, ogni simbolo di costante $s$ o la sua negazione $\lnot s$.
+Con la funzione $ap(\gamma) \rightarrow 2^{\Sigma_s}$ si indica la funzione che
+associa a ogni formula $\gamma$ l'insieme delle sue proposizioni atomiche. 
+Viene chiamato \textit{Letterale}, ogni proposizione atomica $s$ o la sua negazione $\lnot s$.
 Vengono inoltre introdotti i seguenti simboli come abbreviazioni:
 
 \begin{itemize}
-    \item $(\gamma \Rightarrow \kappa)$ per $(\lnot \gamma \lor \kappa)$
-    \item $(\gamma \Leftrightarrow \kappa)$ per $((\gamma \Rightarrow \kappa) \land (\kappa \Rightarrow \gamma))$
-    \item $(\gamma \oplus \kappa)$ per $\lnot(\gamma \Leftrightarrow \kappa)$
+    \item $(\gamma \rightarrow \kappa)$ per $(\lnot \gamma \lor \kappa)$
+    \item $(\gamma \leftrightarrow \kappa)$ per $((\gamma \rightarrow \kappa) \land (\kappa \rightarrow \gamma))$
+    \item $(\gamma \oplus \kappa)$ per $\lnot(\gamma \leftrightarrow \kappa)$
 \end{itemize}
 
-È possibile rappresentare una qualunque formula attraverso il proprio albero di derivazione. Questo albero 
-verrà chiamato in seguito anche \textit{albero sintattico} della formula. Ad esempio, la formula 
+È possibile rappresentare una qualunque formula attraverso il proprio \textit{albero sintattico}.
+Ad esempio, la formula 
 $(s_1 \land s_2) \lor \lnot s_3$ può essere rappresentata dal seguente albero sintattico:
 
 \begin{center}
@@ -92,9 +92,9 @@ Allo stesso modo, nell'albero sintattico della formula è possibile compattare l
 \end{center}
 
 Questa è una caratteristica molto importante, in quanto non solo permette di risparmiare inchiostro, ma consente di vedere
-$\land$ e $\lor$ non più come operatori binari ma come operatori n-ari. A livello implementativo, ciò si traduce in un minor
-impatto in memoria, visite all'albero più veloci e algoritmi di manipolazione più semplici. Si consideri ad esempio di voler ricercare la 
-foglia più a sinistra nell'albero di derivazione della seguente formula $(( ... (((s_1 \land s_2) \land s_3) \land s_4) \land ... )\land s_n)$.
+$\land$ e $\lor$ non più come operatori binari ma come operatori $n$-ari. A livello implementativo, ciò si traduce in un minor
+impatto in memoria, visite dell'albero più veloci e algoritmi di manipolazione più semplici. Si consideri ad esempio di voler ricercare la 
+foglia più a sinistra ($s_1$) nell'albero di sintattico della seguente formula $(( ... (((s_1 \land s_2) \land s_3) \land s_4) \land ... )\land s_n)$.
 Senza compattazione, l'algoritmo di ricerca impiegherebbe $O(n)$ operazioni, mentre con la compattazione $O(1)$.
 
 % ---------------------- END FORMULE ----------------------
@@ -107,44 +107,39 @@ Senza compattazione, l'algoritmo di ricerca impiegherebbe $O(n)$ operazioni, men
 Un \textit{assegnamento} è una qualunque funzione $\alpha$ da un 
 insieme $S \subseteq \Sigma_s$ nell'insieme $\{1, 0\}$ (o $\{True, False\}$).
 $$ \alpha : S \rightarrow \{1, 0\} $$
-Un assegnamento $\alpha$ è detto \textit{appropriato}  per una formula $\varphi \in F$ se e solo se $const(\varphi) \subseteq dom(\alpha)$.
+Un assegnamento $\alpha$ è detto \textit{appropriato}  per una formula $\varphi \in F$ se e solo se $ap(\varphi) \subseteq dom(\alpha)$,
+dove per $dom(\alpha)$ si intende il dominio ($S$) della funzione $\alpha$.
+Per convenzione si assume che $\alpha(\top) = 1$ e $\alpha(\bot) = 0$ per ogni assegnamento $\alpha$.
 
-Si definisce la relazione binaria di \textit{Soddisfacibilità}: 
-$$\models \, \subseteq \{1, 0\}^{S} \times F$$
-In modo tale che dato un assegnamento $\alpha$ appropriato a una formula $\varphi$, si dice che $\alpha \models \varphi$ ($\alpha$ soddisfa $\varphi$) 
-o anche $\alpha$ è un assegnamento per $\varphi$ o  se e solo se:
+Si definisce la relazione binaria $\models \, \subseteq \{1, 0\}^{S} \times F$, detta relazione di \textit{Soddisfacibilità}. 
 
+Dato un assegnamento $\alpha$ appropriato a una formula $\varphi$, si dice che $\alpha \models \varphi$ ($\alpha$ soddisfa $\varphi$ 
+o anche $\alpha$ è un assegnamento per $\varphi$) se e solo se si verifica una delle seguenti condizioni:
 \begin{itemize}
-  \item Se $\varphi$ è una costante $s$ allora $\alpha \models \varphi$ sse $\alpha(s) = 1$
-  \item Se $\varphi$ è $\top$ allora $\alpha \models \varphi$
-  \item Se $\varphi$ è $\bot$ allora $\alpha \not\models \varphi$
-  \item Se $\varphi$ è della forma $\lnot \psi$ (dove $\psi$ è una formula) allora $\alpha \models \varphi$ sse $\alpha \not\models \psi$
-  \item Se $\varphi$ è della forma $(\psi \land \chi)$ (con $\psi$ e $\chi$ formule) allora $\alpha \models \varphi$ sse $\alpha \models \psi$ e $\alpha \models \chi$
-  \item Se $\varphi$ è della forma $(\psi \lor \chi)$ (con $\psi$ e $\chi$ formule) allora $\alpha \models \varphi$ sse $\alpha \models \psi$ o $\alpha \models \chi$
+  \item Se $\varphi$ è una proposizione atomica $s$ o $\top$ o $\bot$, allora $\alpha(s) = 1$
+  \item Se $\varphi$ è della forma $\lnot \psi$ (dove $\psi$ è una formula) allora $\alpha \not\models \psi$
+  \item Se $\varphi$ è della forma $(\psi \land \chi)$ (con $\psi$ e $\chi$ formule) allora $\alpha \models \psi$ e $\alpha \models \chi$
+  \item Se $\varphi$ è della forma $(\psi \lor \chi)$ (con $\psi$ e $\chi$ formule) allora  $\alpha \models \psi$ o $\alpha \models \chi$
 \end{itemize}
 
-Per convenzione si assume che $\alpha(\top) = 1$ e $\alpha(\bot) = 0$ per ogni assegnamento $\alpha$.
-Una \textit{Tautologia} è una formula $\varphi$ tale che per ogni assegnamento $\alpha$ appropriato a $\varphi$, $\alpha \models \varphi$ (in simboli $\models \varphi$).
+Una \textit{Tautologia} è una formula $\varphi$ tale che per ogni assegnamento $\alpha$ appropriato a $\varphi$, $\alpha \models \varphi$ (in notazione $\models \varphi$).
 Una formula è detta soddisfacibile se esiste un assegnamento appropriato che la soddisfa altrimenti è detta insoddisfacibile.
-Date due formule $\varphi$ e $\psi$, si dice che $\psi$ è \textit{conseguenza logica} di $\varphi$ (in simboli $\varphi \models \psi$) 
-se e solo se per ogni assegnamento $\alpha$ appropriato a entrambe le formule, se $\alpha \models \varphi$ allora $\alpha \models \psi$.
+%
+Dato un insieme di formule $\Gamma$ e una formula $\varphi$ si dice che $\varphi$ è una \textit{conseguenza logica} di $\Gamma$ (in notazione $\Gamma \models \varphi$),
+se e solo se ogni assegnamento $\alpha$ di $\Gamma$ (nel senso che $\alpha$ è un assegnamento per ogni formula di $\Gamma$) è un assegnamento di $\varphi$. 
+Cioè se $\alpha \models \Gamma$ allora $\alpha \models \varphi$.
 Due formule sono dette \textit{equivalenti} sse $\varphi \models \psi$ e $\psi \models \varphi$ (in simboli $\varphi \equiv \psi$).
-Un'importante proprietà è che se $\varphi \models \psi$ allora la formula $\varphi \Rightarrow \psi$ 
-è una tautologia ($\models \varphi \Rightarrow \psi$).
+Un'importante proprietà è che se $\varphi_1, ..., \varphi_n \models \psi$ allora la formula $(\varphi_1 \land ... \land \varphi_n) \rightarrow \psi$ 
+è una tautologia ($\models (\varphi_1 \land ... \land \varphi_n) \rightarrow \psi$).
+Un concetto molto simile a quello di equivalenza è l'\textit{equisoddisfacibilità}. 
+Due formule sono equisoddisfacibili se e solo se per ogni assegnamento della prima formula esiste un assegnamento della seconda formula e viceversa.
 
-Due concetti molto simili a quello di equivalenza e conseguenza logica sono l'\textit{equisoddisfacibilità} e la \textit{soundness}. In pratica, due formule sono sound
-se e solo se, se la prima formula è soddisfacibile allora lo è anche la seconda. Due formule sono equisoddisfacibili se e solo se sono sound in entrambe le direzioni. 
-Quindi la conseguenza logica implica la soundness ma non il viceversa. Allo stesso modo l'equivalenza
-logica implica l'equisoddisfacibilità ma non il viceversa. Si consideri ad esempio le due formule $\varphi = s_1$ e $\psi = \lnot s_1$. Ovviamente non 
-può esserci conseguenza logica tra le due formule, ma sono equisoddisfacibili, infatti se $\alpha$ è un assegnamento per $\varphi$ allora è possibile
-costruire un assegnamento $\beta$ per $\psi$ tale che $\beta(s_1) = 1-\alpha(s_1)$ e viceversa.
-
-Un'\textit{inferenza} è una qualunque relazione da $F^n \times F$. Un'inferenza è detta \textit{corretta} se conserva la soddisfacibilità, ovvero 
-se a a partire da formule soddisfacibili non associa formule insoddisfacibili (soundness).
-Un esempio di inferenza è la regola del \textit{Modus Ponens}. Date le premesse $\varphi, (\varphi \Rightarrow \psi)$ si può inferire $\psi$.
+Un'\textit{inferenza} è una qualunque relazione da $2^F \times F$. Un'inferenza è detta \textit{corretta} se conserva la verità, ovvero 
+a partire da formule soddisfacibili non associa formule insoddisfacibili (soundness).
+Un esempio di inferenza è la regola del \textit{Modus Ponens}. Date le premesse $\varphi, (\varphi \rightarrow \psi)$ si può inferire $\psi$.
 Viene utilizzato il simbolo $P \vdash C$ per indicare l'applicazione di un'inferenza alla \textit{Premessa} $P$ per ottenere una \textit{Conclusione} $C$.
-In notazione la regola del modus ponens viene espressa così: $[\varphi, \varphi \Rightarrow \psi] \vdash \psi$ oppure
-$\frac{\varphi, \varphi \Rightarrow \psi}{\psi} $.
+In notazione la regola del modus ponens viene espressa così: $[\varphi, \varphi \rightarrow \psi] \vdash \psi$ oppure
+$\frac{\varphi, \varphi \rightarrow \psi}{\psi} $.
 
 Infine, si definisce \textit{Implicante} di una formula $\varphi$ un insieme $I$ di letterali di $\varphi$ che rendono vera $\varphi$. Cioè, costruendo una
 assegnazione $\alpha$ tale che $\alpha \models c$ per ogni letterale $c \in I$, si ha che $\alpha \models \varphi$. In altre parole la formula 
@@ -163,33 +158,35 @@ tramite una successione d'inferenze (corrette) in una forma normale.
 In questo paragrafo verranno descritte le tre forme normali che sono state utilizzate per il preprocessing
 dell'algoritmo. In questo caso, tutte e tre le forme presentate preservano la relazione di equivalenza logica, quindi è sempre possibile
 trasformare una formula in un'altra equivalente in uno di questi tre formati. 
-La prima e l'ultima ossia le forme NNF e CNF sono le più famose e utilizzate, mentre la seconda, la ENNF, non è abbastanza conosciuta da essere definita standard
+La prima e l'ultima ossia le forme NNF (Negation Normal Form) e CNF (Conjunctive Normal Form) sono le più famose e utilizzate, mentre la seconda, la ENNF (Equivalence Negation Normal Form), non è abbastanza conosciuta da essere definita standard
 e viene utilizzata per bypassare alcuni problemi di efficienza causati dalla CNF grazie all'utilizzo di tecniche di Naming, che però verranno discusse nella prossima sezione.
 
-La prima tra queste è la \textit{NNF} ossia \textit{Negated Normal Form} (Forma normale negata). Una formula è in formato NNF 
-sse non contiene connettivi semplificati ($\Rightarrow$, $\Leftrightarrow$, $\oplus$) e la negazione è applicata solo a letterali. La classe di formule 
+La prima tra queste è la \textit{NNF}. Una formula è in formato NNF 
+sse non contiene connettivi semplificati ($\rightarrow$, $\leftrightarrow$, $\oplus$) e la negazione è applicata solo a letterali. La classe di formule 
 NNF è generata dalla seguente grammatica:
 
-$$ \eta := \top \mid \bot \mid S \mid \lnot S \mid (\eta \land \eta) \mid (\eta \lor \eta ) $$
+$$ \eta := \top \mid \bot \mid S \in \Sigma_s \mid \lnot S \in \Sigma_s \mid (\eta \land \eta) \mid (\eta \lor \eta ) $$
 
-Dove $S \in \Sigma_s$ è un simbolo di costante. La normalizzazione di una formula in NNF è un processo semplice che consiste nell'applicare opportunamente 
+La normalizzazione di una formula in NNF è un processo semplice che consiste nell'applicare opportunamente 
 le regole di De Morgan e le regole di semplificazione dei connettivi.
 
-La seconda forma normale è la \textit{ENNF} ossia \textit{Extended Negated Normal Form} (Forma normale negata estesa). 
+La seconda forma normale è la \textit{ENNF}. 
 Il formato ENNF è essenzialmente una classe più permissiva della NNF, in quanto conserva il vincolo sulla negazione ma 
-vieta esclusivamente l'uso di '$\Rightarrow$'. La classe di formule ENNF è generata dalla seguente grammatica:
+vieta esclusivamente l'uso di '$\rightarrow$'. La classe di formule ENNF è generata dalla seguente grammatica:
  
-$$ \overline{\eta}  := \top \mid \bot \mid S \mid \lnot S \mid (\overline{\eta} \land \overline{\eta}) \mid (\overline{\eta} \lor \overline{\eta} ) \mid (\overline{\eta} \Leftrightarrow \overline{\eta}) \mid (\overline{\eta} \oplus \overline{\eta}) $$
+$$ \overline{\eta}  := \top \mid \bot \mid S \in \Sigma_s \mid \lnot S \in \Sigma_s \mid (\overline{\eta} \land \overline{\eta}) \mid (\overline{\eta} \lor \overline{\eta} ) \mid (\overline{\eta} \leftrightarrow \overline{\eta}) \mid (\overline{\eta} \oplus \overline{\eta}) $$
 
-La terza e ultima forma normale è la \textit{CNF} ossia \textit{Conjunctive Normal Form} (Forma normale congiuntiva). Una formula è in formato CNF
+La terza e ultima forma normale è la \textit{CNF}. Una formula è in formato CNF
 sse è una congiunzione di disgiunzioni di letterali. La classe di formule CNF è generata dalla seguente grammatica:
 
 
 $$ \zeta := \xi \mid (\xi \land \zeta) $$
-$$ \xi := \top \mid \bot \mid S \mid \lnot S \mid (\xi \lor \xi ) $$
+$$ \xi := \top \mid \bot \mid S \in \Sigma_s \mid \lnot S \in \Sigma_s \mid (\xi \lor \xi ) $$
 
-La classe CNF è storicamente la più famosa e utilizzata, in quanto è la più semplice da implementare e da manipolare. È possibile vedere le clausole
-come insiemi di letterali mentre la formula principale è vista come un insieme di clausole. Ad esempio, la CNF $(s_1 \lor \lnot s_2) \land (s_3)$ può essere rappresentata
+La classe CNF è storicamente la più famosa e utilizzata, in quanto la sua rappresentazione è molto semplice.
+È infatti possibile vedere le clausole come insiemi di letterali mentre la 
+formula principale è vista come un insieme di clausole. 
+Ad esempio, la CNF $(s_1 \lor \lnot s_2) \land (s_3)$ può essere rappresentata
 in termini insiemistici come $\{\{s_1, \lnot s_2\}, \{s_3\}\}$. 
 La clausola vuota $\{\}$ è una clausola speciale che rappresenta la formula $\bot$, viene spesso raffigurata dal simbolo $\square$.
 La normalizzazione di una formula in CNF è un processo più complesso rispetto alle altre due forme normali. Non esiste un unica tecnica di normalizzazione, ma
@@ -223,27 +220,27 @@ descritto nel paragrafo \ref{sec:forme_normali}, si ottengono $n \cdot m$ clauso
 Questo perché la continua applicazione della proprietà distributiva porta a una duplicazione considerevole delle sottoformule.
 Una possibile tecnica di ottimizzazione è quella del \textit{Naming} \cite{naming} anche detto \textit{Renamig}.
 In generale per \textit{Naming} si intende una qualunque tecnica di rinomina di letterali o sottoformule.
-In questo caso, per \textit{Naming} si intende la rinomina di sottoformule tramite l'aggiunta di un nuovo simbolo di costante.
-Per l'esempio precedente si assuma che $s_n$ sia un simbolo di costante non presente nella formula originale.
+In questo caso, per \textit{Naming} si intende la rinomina di sottoformule tramite l'aggiunta di un nuovo simbolo proposizionale.
+Per l'esempio precedente si assuma che $s_n$ sia un simbolo proposizionale non presente nella formula originale.
 Applicando il \textit{Naming} si ottiene la seguente formula:
 
 $$ (\varphi \lor s_n) \land (\lnot s_n \lor \psi)$$
 
-In questo modo, la clausificazione della formula genera solo $n + m$ clausole al costo dell'aggiunta di un nuovo simbolo di costante.
+In questo modo, la clausificazione della formula genera solo $n + m$ clausole al costo dell'aggiunta di un nuovo simbolo.
 Un discorso simile vale per formule con la doppia implicazione e lo xor, solo che in questo caso
 anche solo la normalizzazione in NNF può portare a una crescita esponenziale del numero di sottoformule.
 La trasformazione in NNF e poi in CNF della formula:
 
-$$ ((...((s_1 \Leftrightarrow s_2) \Leftrightarrow s_3) \Leftrightarrow ...) \Leftrightarrow s_n)$$
+$$ ((...((s_1 \leftrightarrow s_2) \leftrightarrow s_3) \leftrightarrow ...) \leftrightarrow s_n)$$
 
 Porta alla generazione di $2^{n-1}$ clausole. Nell'esempio particolare in cui $n=6$ si ottengono $32$ clausole ma con l'introduzione 
-di due nuovi nomie $s_7$ e $s_8$ è possibile ottenere la seguente formula:
+di due nuovi nomi $s_7$ e $s_8$ è possibile ottenere la seguente formula:
 
-$$ (s_7 \Leftrightarrow (((s_1 \Leftrightarrow s_2) \Leftrightarrow s_3) \Leftrightarrow s_4)) $$
+$$ (s_7 \leftrightarrow (((s_1 \leftrightarrow s_2) \leftrightarrow s_3) \leftrightarrow s_4)) $$
 $$ \land $$
-$$ (s_8 \Leftrightarrow (s_7 \Leftrightarrow s_5)) $$
+$$ (s_8 \leftrightarrow (s_7 \leftrightarrow s_5)) $$
 $$ \land $$
-$$ (s_8 \Leftrightarrow s_6) $$
+$$ (s_8 \leftrightarrow s_6) $$
 
 Che genera solo $22$ clausole.
 Il processo per stabilire quale sottoformula rinominare è un problema complesso. 
@@ -261,9 +258,9 @@ ampliando il suo ambito per trattare in maniera più ricca e dettagliata le rela
 e le proprietà delle entità coinvolte. Mentre la logica proposizionale si occupa di proposizioni atomiche, 
 la logica dei predicati introduce i predicati,
 che sono relazioni che sono vere o false a seconda dell'interpretazione e dalle variabili che contengono.
-Vengono generalizzati anche i connettivi logici $\land$ e $\lor$ tramite i quantificatori universali ed esistenziali $\forall$ e $\exists$
-in modo da poter parlare di anche di insiemi di oggetti non finiti.
-
+Vengono introdotti anche due nuovi connettivi logici, $\forall$ e $\exists$, che permettono 
+di esprimere concetti come "per ogni" e "esiste", ampliando notevolmente il potere espressivo della logica,
+permettendo di parlare anche di insiemi non finiti.
 
 % ---------------------- Termini ----------------------
 \subsection{Termini e Formule} \label{sec:sintassi_fof}
@@ -279,9 +276,9 @@ Funzioni e predicati di arità 0 sono detti rispettivamente \textit{Funzioni cos
 I simboli contenuti in $\Sigma_f \cup \Sigma_p$ sono detti \textit{simboli non logici} e ogni suo sottoinsieme è detto \textit{tipo}.
 Un \textit{termine} è una stringa generata dalla seguente grammatica:
 
-$$ \tau := X \mid f(\tau_1, ..., \tau_n) $$
+$$ \tau := X \in \Sigma_x \mid f(\tau_1, ..., \tau_n) $$
 
-Dove $X$ è un simbolo di variabile e $f$ è un simbolo di funzione tale che $arity(f) = n$. In altre parole:
+Dove $f$ è un simbolo di funzione tale che $arity(f) = n$. In altre parole:
 \begin{itemize}
   \item Ogni variabile è un termine
   \item Ogni funzione costante è un termine
@@ -294,7 +291,7 @@ di arità $n$ e $\tau_1, ..., \tau_n$ sono termini.
 Vengono chiamati \textit{Letterali} tutti gli atomi e la loro negazione.
 Termini e Letterali sono detti \textit{ground} se non contengono variabili.
 Come già visto per le formule proposizionali, è possibile rappresentare un termine o un letterale
-attraverso il proprio albero di derivazione. Ad esempio, il letterale $p_1(f_2(x_1, f_3), f_1)$ può essere rappresentato dal seguente albero sintattico:
+attraverso il proprio albero di sintattico. Ad esempio, il letterale $p_1(f_2(x_1, f_3), f_1)$ può essere rappresentato dal seguente albero sintattico:
 
 \begin{center}
   \begin{tikzpicture}[level distance=1cm,
@@ -309,7 +306,7 @@ attraverso il proprio albero di derivazione. Ad esempio, il letterale $p_1(f_2(x
   \end{tikzpicture}
 \end{center}
 
-Come intuibile i sottoalberi di un termine sono detti \textit{sottotermini}. Si assuma di avere due letterali $p_1(f_2, f_1(x_1, f_3))$ e 
+Come intuibile, i sottoalberi di un termine sono detti \textit{sottotermini}. Si assuma di avere due letterali $p_1(f_2, f_1(x_1, f_3))$ e 
 $\lnot p_1(f_2(f_1(x_1, f_3), f_3), f_3)$ di volerli rappresentare in un unico grafo. Al posto di creare una foresta con due alberi indipendenti,
 è possibile creare un unica struttura condividendo i sottotermini comuni:
 
@@ -343,7 +340,7 @@ $\lnot p_1(f_2(f_1(x_1, f_3), f_3), f_3)$ di volerli rappresentare in un unico g
 
 Una struttura del genere è detta \textit{Prfectly Shared} (Perfettamente condivisa). Nella pratica questa
 tecnica di condivisione di sottotermini è indispensabile dato che,
-anche se a un costo per la creazione e la gestione non indifferente,
+anche se ha un costo per la creazione e la gestione non indifferente,
 permette un risparmio di memoria e di tempo considerevole. Per effettuare ad esempio un controllo 
 di uguaglianza tra due sottotermini è sufficiente controllare che le due frecce che partono dai termini padre
 puntino allo stesso sottotermine, senza dover visitare l'intera sotto struttura, rendendo così tale operazione a tempo costante.
@@ -357,14 +354,14 @@ e Si definisce come formule del primo ordine il linguaggio $F'$ generato dalla s
 $$ \phi := \top \mid \bot \mid A \mid \lnot \phi \mid (\phi \land \phi) \mid (\phi \lor \phi) \mid \forall x (\phi) \mid \exists x (\phi) $$
 
 Dove $A$ è un atomo e $x$ è un simbolo di variabile. I simboli $\forall$ e $\exists$ sono detti quantificatori universali ed esistenziali.
-Una variabile $x$ è detta \textit{vincolata} se è contenuta in una formula del tipo $\forall x (\varphi')$ o $\exists x (\varphi')$ 
+Una variabile $x$ è detta \textit{vincolata} se ogni sua occorrenza è contenuta in una formula del tipo $\forall x (\varphi')$ o $\exists x (\varphi')$ 
 altrimenti è detta \textit{libera}. Una formula è detta \textit{enunciato} se non contiene variabili libere. Una formula è detta 
 \textit{ground} se tutti i suoi letterali sono ground.
 
 Per comodità di scrittura è possibile raggruppare catene di quantificatori dello stesso tipo. Ad esempio, la formula 
 $ \forall x_1 \forall x_2 \forall x_3 \exists x_4 \exists x_5 \forall x_6 \forall x_7 (\phi)$ può essere scritta come 
 $\forall x_1 x_2 x_3 \exists x_4 x_5 \forall x_6 x_7 (\phi)$. In modo simile a come visto per $\lor$ e $\land$ è possibile vedere
-$\forall$ e $\exists$ come operatori n-ari che prendono in input n-1 variabili e una formula.
+$\forall$ e $\exists$ come operatori $n$-ari che prendono in input n-1 variabili e una formula.
 
 
 % ---------------------- END Termini ----------------------
@@ -378,23 +375,23 @@ Si definisce come \textit{sostituzione} una qualunque funzione da un insieme di 
 Dato un termine $\tau$ e una sostituzione $\sigma = \{(x_1, t_1), ..., (x_n, t_n)\}$,
 con la scrittura $\tau[x_1/t_1, ..., x_n/t_n]$ oppure $\tau^\sigma$ si indica il termine ottenuto sostituendo \textit{contemporaneamente} 
 tutte le occorrenze delle variabili $x_1, ..., x_n$ con i termini $t_1, ..., t_n$ in $\tau$.
-Con contemporaneamente si intende che ogni singola sostituzione viene effettuata sul termine originale, 
+Con 'contemporaneamente' si intende che ogni singola sostituzione viene effettuata sul termine originale, 
 senza essere influenzata dalle sostituzioni precedenti o successive.
 Ad esempio, se $\tau = f(x_1, x_2)$ allora $\tau[x_1/x_2, x_2/x_1] = f(x_2, x_1)$ e non $f(x_1, x_1)$ 
 che è invece il risultato dell'applicazione sequenziale delle due regole $\tau[x_1/x_2][x_2/x_1]$.
 
-Dati due termini $\tau_1$ e $\tau_2$ si dice che $\tau_1$ è \textit{più generico} di $\tau_2$ o che $\tau_2$ è \textit{più specifico} di $\tau_1$
+Dati due termini $\tau_1$ e $\tau_2$ si dice che $\tau_1$ è \textit{più generale} di $\tau_2$ o che $\tau_2$ è \textit{più specifico} di $\tau_1$
 se e solo se esiste una sostituzione $\sigma$ tale che $\tau_1^\sigma = \tau_2$.
 Se esiste una sostituzione $\sigma$ tale che $\tau_1^\sigma = \tau_2^\sigma$ allora i due termini sono detti \textit{unificabili} e 
 la sostituzione $\sigma$ è detta \textit{unificatore} dei due termini.
 
 
 Date due sostituzioni $\sigma_1$ e $\sigma_2$ si dice che $\sigma_1$ 
-è \textit{più generica} di $\sigma_2$ o che $\sigma_2$ è \textit{più specifica} di $\sigma_1$ se e solo se 
+è \textit{più generale} di $\sigma_2$ o che $\sigma_2$ è \textit{più specifica} di $\sigma_1$ se e solo se 
 per ogni termine $\theta$, $\sigma_2$ è sussunta da $\sigma_1$, 
 ossia sse esiste una sostituzione $\theta$ tale che $\tau^{\sigma_2} = {(\tau^{\sigma_1})}^\theta$.
 Dati due termini unificabili $\tau_1$ e $\tau_2$ si dice che $\sigma_1$ è un \textit{MGU} (Most General Unifier) di $\tau_1$ e $\tau_2$ 
-se è la sostituzione più generica tra tutti gli unificatori dei due termini.
+se è la sostituzione più generale tra tutti gli unificatori dei due termini.
 
 
 È possibile generalizzare il concetto di unificazione per insiemi di termini, letterali e insiemi di letterali.
@@ -402,7 +399,7 @@ Dato un insieme di termini $T$, si dice che $T$ è unificabile se esiste una sos
 per ogni coppia di termini $\tau_1, \tau_2 \in T$. In questo caso $\sigma$ è detto unificatore di $T$. 
 Due letterali della stessa arità $L_1 = p_1(\tau_1, ..., \tau_n)$ e $L_2 = p_2(\tau_1', ..., \tau_n')$ 
 sono unificabili se e solo se esiste una sostituzione che li eguaglia ignorando il simbolo di predicato.
-In altre parole sia $f$ una funzione di arità $n$ allora $L_1$ e $L_2$ sono unificabili se e solo se sono unificabili i termini
+In altre parole sia $f$ una funzione di arità $n$, allora $L_1$ e $L_2$ sono unificabili se e solo se sono unificabili i termini
 $f(\tau_1, ..., \tau_n)$ e $f(\tau_1', ..., \tau_n')$.
 Letterali di diversa arità non sono mai unificabili.
 Un insieme di letterali è unificabile se e solo se esiste una sostituzione che unifica a due a due tutti i letterali dell'insieme.
@@ -410,6 +407,12 @@ Un insieme di letterali è unificabile se e solo se esiste una sostituzione che 
 % se e solo se tutte le liste hanno la stessa lunghezza $n$ e dato un qualunque predicato $p$ $n$-ario l'insieme 
 % $\{p(\underline{\tau_1}), ..., p(\underline{\tau_n})\}$ è unificabile.
 
+Una function obstruction è una situazione in cui visitando allo stesso modo l'albero sintattico dei termini si incontrano
+due simboli di funzione diversi. Ad esempio, i termini $f_1(x_1, f_2(x_2))$ e $f_1(x_1, f_3(x_2))$ non sono unificabili in quanto
+presentano una function obstruction, $f_2 \neq f_3$. Una variable obstruction invece è una situazione in cui visitando allo stesso modo
+l'albero sintattico dei termini si incontra una variabile $x$ nel primo termine 
+e si incontra un sottotermine $t \; (\neq x)$ che contiene $x$ nel secondo termine. Ad esempio i termini $f_1(x_1, f_2(x_2))$ e $f_1(f_2(x_1), x_1)$
+non sono unificabili in quanto presentano una variable obstruction, $x_1$ è contenuta in $f_2(x_1)$.
 
 Un importante risultato è questo:
 \newtheorem{proposition}{Proposizione}
@@ -422,21 +425,17 @@ Un importante risultato è questo:
   \end{enumerate}
 \end{proposition}
 
-Una function obstruction è una situazione in cui visitando allo stesso modo l'albero sintattico dei termini si incontrano
-due simboli di funzione diversi. Ad esempio, i termini $f_1(x_1, f_2(x_2))$ e $f_1(x_1, f_3(x_2))$ non sono unificabili in quanto
-presentano una function obstruction, $f_2 \neq f_3$. Una variable obstruction invece è una situazione in cui visitando allo stesso modo
-l'albero sintattico dei termini si incontra una variabile $x$ nel primo termine 
-e si incontra un sottotermine $t \; (\neq x)$ che contiene $x$ nel secondo termine. Ad esempio i termini $f_1(x_1, f_2(x_2))$ e $f_1(f_2(x_1), x_1)$
-non sono unificabili in quanto presentano una variable obstruction, $x_1$ è contenuta in $f_2(x_1)$.
 
+Un noto algoritmo per la ricerca di un MGU di due termini è l'algoritmo di unificazione di \textit{Robinson} riportato nell'algoritmo \ref{alg:unificazione}.
+Il vero collo di bottiglia di questo algoritmo è la ricerca delle variable obstruction che lo portano ad avere una complessità esponenziale.
+Vi sono vari modi per ottimizzare l'algoritmo, 
+ad esempio utilizzando strutture di indicizzazione dei termini e variabili o utilizzando tecniche di programmazione dinamica.
+In alcuni casi è anche possibile evitare totalmente la ricerca delle variable obstruction, ad esempio se 
+si hanno due termini senza variabili in comune e senza ripetizioni di variabili.
 
-Un noto algoritmo per la ricerca di un MGU di due termini è l'algoritmo di unificazione di \textit{Robinson}. Il collo di bottiglia di questo 
-algoritmo è la occurrence-check, ovvero la ricerca di una variable obstruction. Se si assume che i termini in 
-input non contengono variabili in comune è possibile ignorare questa situazione. Di seguito viene riportato l'algoritmo di Robinson
-senza occurrence-check:
-
-\begin{algorithm}[H]
-  \caption{Algoritmo di unificazione di Robinson senza occurrence-check}
+\begin{algorithm}[H] \label{alg:unificazione}
+  \small
+  \caption{Algoritmo di unificazione di Robinson}
   \KwSty{Firma:}{ unify($\tau_1, \tau_2$)}
 
   \KwIn{$\tau_1, \tau_2$ due termini}
@@ -460,11 +459,23 @@ senza occurrence-check:
 
     \If{$\tau_1 \neq \tau_2$}{
       \Switch{$\tau_1 \tau_2$}{
-        \textbf{case} $\tau_1$ is a variable $x$ and $\tau_2$ is a variabile $y$ $\Rightarrow$ $\sigma := \sigma \cup \{x/y\}$\;
-        \textbf{case} $\tau_1$ is a variable $x$ $\Rightarrow$ $\sigma := \sigma \cup \{x/\tau_2\}$\;
-        \textbf{case} $\tau_2$ is a variable $y$ $\Rightarrow$ $\sigma := \sigma \cup \{y/\tau_1\}$\;
-        \textbf{case} $\tau_1 = f(s_1, ..., s_n)$ and $\tau_2 = f(t_1, ..., t_n)$ $\Rightarrow$ $S.push(s_1, t_1), ..., S.push(s_n, t_n)$\;
-        \textbf{case} $\tau_1 = f(s_1, ..., s_n)$ and $\tau_2 = g(t_1, ..., t_m)$ $\Rightarrow$ \Return{$\bot$}\;
+        \Case{$\tau_1$ is a variable $x$ and $\tau_2$ is a variabile $y$}{$\sigma := \sigma \cup \{x/y\}$}
+        \Case{$\tau_1$ is a variable $x$}{
+          \If{x in $\tau_2^\sigma$}{
+            \Return{$\bot$}
+          } \Else {
+            $\sigma := \sigma \cup \{x/\tau_2\}$
+          }
+        }
+        \Case{$\tau_2$ is a variable $x$}{
+          \If{x in $\tau_1^\sigma$}{
+            \Return{$\bot$}
+          } \Else {
+            $\sigma := \sigma \cup \{x/\tau_1\}$
+          }
+        }
+        \Case{$\tau_1 = f(u_1, ..., u_n)$ and $\tau_2 = f(t_1, ..., t_n)$} {$S.push(u_1, t_1), ..., S.push(u_n, t_n)$}
+        \Case{$\tau_1 = f(u_1, ..., u_n)$ and $\tau_2 = g(t_1, ..., t_m)$} {\Return{$\bot$}}
       }
     }
   }
@@ -477,66 +488,56 @@ senza occurrence-check:
 % ---------------------- Semantica ----------------------
 \subsection{Semantica} \label{sec:semantica_fof}
 Si indica con \textit{tipo} di $\varphi$, l'insieme di tutti i simboli non logici presenti nella formula (costanti, funzioni e predicati).
-Si definisce \textit{Modello} di un tipo $\Gamma$ una coppia $\mathcal{M} = (D, I)$ dove $D$ è un insieme non vuoto detto \textit{Dominio} e $I$ è una funzione: 
-$I: \Gamma \rightarrow D$ detta d'\textit{Interpretazione} che associa ogni simbolo non logico del tipo a un elemento del dominio in modo tale che per ogni simbolo non logico $s$:
+Si definisce \textit{Modello} di un tipo $\Gamma$ una coppia $\mathcal{M} = (D, \mathfrak{I})$ dove $D$ è un insieme non vuoto detto \textit{Dominio} ($1 \in D$) e $\mathfrak{I}$ è una funzione: 
+$\mathfrak{I}: \Gamma \rightarrow D$ detta d'\textit{Interpretazione} che associa ogni simbolo non logico del tipo a un elemento del dominio in modo tale che per ogni simbolo non logico $s$:
 
 \begin{itemize}
-  \item Se $s$ è un simbolo di funzione n-aria allora $I(s)$ è una funzione $n$-aria su $D$: $I(s): D^n \rightarrow D$.
-  \item Se $s$ è un simbolo di predicato n-ario allora $I(s)$ è una relazione $n$-aria su $D$: $I(s) \subseteq D^n$.
+  \item Se $s$ è un simbolo di funzione $n$-aria allora $\mathfrak{I}(s)$ è una funzione $n$-aria su $D$: $\mathfrak{I}(s): D^n \rightarrow D$.
+  \item Se $s$ è un simbolo di predicato $n$-ario allora $\mathfrak{I}(s)$ è una relazione $n$-aria su $D$: $\mathfrak{I}(s) \subseteq D^n$.
+  \item Se $s$ è un simbolo di funzione o predicato costante allora $\mathfrak{I}(s) \in D$ è un oggetto del dominio.
 \end{itemize}
 
-Per l'interpretazioni delle costanti si assume che nel dominio siano presenti almeno due oggetti distinti $\{0, 1\} \in D$:
-\begin{itemize}
-  \item Se $s$ è un simbolo di funzione costante allora $I(s) \in D$ è un oggetto del dominio.
-  \item Se $s$ è un simbolo di predicato costante allora $I(s) \in \{0, 1\}$.
-  \item Se $s$ è $\top$ allora $I(s) = 1$
-  \item Se $s$ è $\bot$ allora $I(s) = 0$
-\end{itemize}
-
-Per semplicità di lettura, d'ora in poi l'applicazione della funzione $I$ ad un simbolo $s$ verrà indicata con $s^I$.
-Si definisce \textit{Contesto}, una qualunque mappatura $\gamma : \Sigma_x \rightarrow D$ che associa variabili a un elemento del dominio.
+Per semplicità di lettura, d'ora in poi l'applicazione della funzione $\mathfrak{I}$ ad un simbolo $s$ verrà indicata con $s^\mathfrak{I}$.
+Si definisce \textit{Contesto}, una qualunque funzione $\gamma : \Sigma_x \rightarrow D$ che associa variabili a un elemento del dominio.
 Con la scrittura $\gamma[x/t]$ si indica il contesto ottenuto sostituendo il valore della variabile $x$ con l'elemento $t$.
 Ad esempio se $\gamma = \{x_1 \rightarrow a, x_2 \rightarrow b\}$ allora $\gamma[x_1/b] = \{x_1 \rightarrow b, x_2 \rightarrow b\}$.
-Per l'applicazione di un contesto a una variabile si utilizza la stessa notazione usata per le funzioni, ovvero $\gamma(x)$.
+% Per l'applicazione di un contesto a una variabile si utilizza la stessa notazione usata per le funzioni, ovvero $\gamma(x)$.
 Per l'esempio precedente $\gamma(x_1) = a$, $\gamma(x_2) = b$ e $\gamma[x_1/b](x_1) = b$.
-Se una variabile $x$ non è presente nel contesto allora si assume che $\gamma(x) = x$.
-Si definisce l'interpretazione di un termine o predicato $\tau$ nel contesto $\gamma$ secondo l'interpretazione $I$:
+Se una variabile $x$ non è presente nella definizione di un contesto allora si assume che $\gamma(x) = x$.
+Si definisce l'interpretazione di un termine o predicato $\tau$ nel contesto $\gamma$ secondo l'interpretazione $\mathfrak{I}$:
 
 \begin{itemize}
-  \item Se $\tau$ è una variabile $x$ allora $\tau^I_\gamma = \gamma(x)$
-  % \item Se $\tau$ è una costante $c$ allora $\tau^I_\gamma = c^I$ (Le costanti non dipendono dal contesto)
-  \item Se $\tau$ è una funzione $f(\tau_1, ..., \tau_n)$ allora $\tau^I_\gamma = f^I({\tau_1}^I_\gamma, ..., {\tau_n}^I_\gamma)$
-  \item se $\tau$ è un predicato $p(\tau_1, ..., \tau_n)$ allora $\tau^I_\gamma = p^I({\tau_1}^I_\gamma, ..., {\tau_n}^I_\gamma)$
+  \item Se $\tau$ è una variabile $x$ allora $\tau^\mathfrak{I}_\gamma = \gamma(x)$
+  % \item Se $\tau$ è una costante $c$ allora $\tau^\mathfrak{I}_\gamma = c^\mathfrak{I}$ (Le costanti non dipendono dal contesto)
+  \item Se $\tau$ è una funzione $f(\tau_1, ..., \tau_n)$ allora $\tau^\mathfrak{I}_\gamma = f^\mathfrak{I}({\tau_1}^\mathfrak{I}_\gamma, ..., {\tau_n}^\mathfrak{I}_\gamma)$
+  \item se $\tau$ è un predicato $p(\tau_1, ..., \tau_n)$ allora $\tau^\mathfrak{I}_\gamma = p^\mathfrak{I}({\tau_1}^\mathfrak{I}_\gamma, ..., {\tau_n}^\mathfrak{I}_\gamma)$
 \end{itemize}
 
-
 Data una formula del primo ordine $\varphi$ si dice che il modello $\mathcal{M}$ è appropriato per la formula $\varphi$ se e solo se il tipo della formula è contenuto nel tipo del modello.
-Un modello appropriato $\mathcal{M}$ soddisfa una formula $\varphi$ nel contesto $\gamma$ se e solo se:
+Un modello appropriato $\mathcal{M}$ soddisfa una formula $\varphi$ nel contesto $\gamma$, in notazione $\mathcal{M}, \gamma \models \varphi$, se e solo se si verifica una delle seguenti condizioni:
 \begin{itemize}
-  \item Se $\varphi$ è un predicato costante $p$ (o $\top$/$\bot$) allora $\mathcal{M}, \gamma \models p$ se e solo se $p^I = 1$
-  \item Se $\varphi$ è della forma $\lnot \psi$ (dove $\psi$ è una formula) allora $\mathcal{M}, \gamma \models \varphi$ se e solo se $\mathcal{M}, \gamma \not\models \psi$
-  \item Se $\varphi$ è della forma $(\psi \land \chi)$ (con $\psi$ e $\chi$ formule) allora $\mathcal{M}, \gamma \models \varphi$ se e solo se $\mathcal{M}, \gamma \models \psi$ e $\mathcal{M}, \gamma \models \chi$
-  \item Se $\varphi$ è della forma $(\psi \lor \chi)$ (con $\psi$ e $\chi$ formule) allora $\mathcal{M}, \gamma \models \varphi$ se e solo se $\mathcal{M}, \gamma \models \psi$ o $\mathcal{M}, \gamma \models \chi$
-  \item Se $\varphi$ è della forma $\forall x (\psi)$ (dove $\psi$ è una formula) allora $\mathcal{M}, \gamma \models \varphi$
-   se e solo se per ogni elemento $m \in D$ vale $\mathcal{M}, \gamma[x/m] \models \psi$
-  \item Se $\varphi$ è della forma $\exists x (\psi)$ (dove $\psi$ è una formula) allora $\mathcal{M}, \gamma \models \varphi$ se e solo se
-    esiste un elemento $m \in D$ tale che $\mathcal{M}, \gamma[x/m] \models \psi$
-  \item Infine se $\varphi$ è un letterale $p(\tau_1, ..., \tau_n)$ allora $\mathcal{M}, \gamma \models \varphi$ se e solo se $p^I({\tau_1}^I_\gamma, ..., {\tau_n}^I_\gamma)$
+  \item Se $\varphi$ è un predicato costante $p$ allora $p^\mathfrak{I} = 1$ oppure $\varphi$ è $\top$
+  \item Se $\varphi$ è della forma $\lnot \psi$ (dove $\psi$ è una formula) allora $\mathcal{M}, \gamma \not\models \psi$
+  \item Se $\varphi$ è della forma $(\psi \land \chi)$ (con $\psi$ e $\chi$ formule) allora $\mathcal{M}, \gamma \models \psi$ e $\mathcal{M}, \gamma \models \chi$
+  \item Se $\varphi$ è della forma $(\psi \lor \chi)$ (con $\psi$ e $\chi$ formule) allora $\mathcal{M}, \gamma \models \psi$ o $\mathcal{M}, \gamma \models \chi$
+  \item Se $\varphi$ è della forma $\forall x (\psi)$ (dove $\psi$ è una formula) allora per ogni elemento $m \in D$ vale $\mathcal{M}, \gamma[x/m] \models \psi$
+  \item Se $\varphi$ è della forma $\exists x (\psi)$ (dove $\psi$ è una formula) allora esiste un elemento $m \in D$ tale che $\mathcal{M}, \gamma[x/m] \models \psi$
+  \item Infine se $\varphi$ è un predicato $p(\tau_1, ..., \tau_n)$ allora $p^\mathfrak{I}({\tau_1}^\mathfrak{I}_\gamma, ..., {\tau_n}^\mathfrak{I}_\gamma)$
 \end{itemize}
 
 Data una formula $\varphi$ si dice che un modello $\mathcal{M}$ soddisfa $\varphi$ o anche che $\mathcal{M}$ 
 è un modello di $\varphi$ se e solo se $\mathcal{M}$ è appropriato per $\varphi$ e $\mathcal{M}, \gamma \models \varphi$ per ogni contesto $\gamma$,
 in notazione $\mathcal{M} \models \varphi$. Una formula è detta \textit{soddisfacibile} se esiste un modello che la soddisfa.
 Una formula è detta \textit{valida} se ogni modello la soddisfa.
-La relazione di conseguenza logica, equivalenza, equisoddisfacibilità e soundness sono definite in modo analogo alla logica proposizionale
+La relazione di conseguenza logica, equivalenza e equisoddisfacibilità sono definite in modo analogo alla logica proposizionale
 cambiando la parola 'assegnamento' con 'modello'.
 
 
 % Così come è stata posta questa semantica nessuna formula con variabili libere può avere un modello.
-Così come è stata posta questa semantica la soddisfacibilità per formule con variabili libere non è ben definita.
+Così come è stata posta questa semantica, la soddisfacibilità per formule con variabili libere non è ben definita.
 % Ad esempio se si considera una formula $\varphi$ con una variabile libera $x$ e si considera un modello $\mathcal{M}$ appropriato per $\varphi$,
 % è sufficiente prendere un contesto vuoto $\gamma = \{\}$ per ottenere $\mathcal{M}, \gamma \not\models \varphi$.
-Per ovviare a questa cosa si potrebbe estende la definizione di soddisfacibilità per formule con variabili libere.
+Per ovviare ciò si potrebbe estende la definizione di soddisfacibilità per formule con variabili libere.
 Dato un modello $\mathcal{M}$ appropriato ad una formula $\varphi$ si dice che $\mathcal{M}$ soddisfa $\varphi$ se e solo se
 \begin{itemize}
   \item Se la formula non contiene variabili libere allora la definizione di soddisfacibilità rimane invariata.
@@ -544,19 +545,19 @@ Dato un modello $\mathcal{M}$ appropriato ad una formula $\varphi$ si dice che $
   per ogni contesto $\gamma$ che contiene almeno ogni variabile libera di $\varphi$ vale $\mathcal{M}, \gamma \models \varphi$.
 \end{itemize}
 
-In questo modo fomule con variabili libere divengono 
-uguali in termini di semantica alle stesse formule con le variabili libere quantificate universalmente.
+In questo modo, formule con variabili libere divengono 
+equivalenti alle stesse formule con le variabili libere quantificate universalmente.
 % Con questa modifica non vi è differenza nel significato tra enunciati del tipo $\forall x (\varphi)$ e formule $\varphi$,
 Da questo momento in poi ogni variabile libera presente in una formula verrà considerata come vincolata da un quantificatore universale posto all'inizio della formula.
 
 Un'altra osservazione interessante è che se nella formula sono presenti esclusivamente predicati costanti e simboli logici allora il modello si comporta 
 esattamente come un'assegnazione proposizionale. 
 In questo caso è sufficiente rimuovere eventuali quantificatori e cambiare i simboli di predicato da $p$ a $s$ mantenendo l'indice e si ottiene una 
-formula proposizionale che, ha una assegnazione se e solo se la formula originale ha un modello.
+formula proposizionale che ha una assegnazione se e solo se la formula originale ha un modello.
 È possibile estendere questa considerazione anche alle formule ground, ovvero formule senza variabili.
-Infatti se ogni predicato ground viene sostituito da un nuovo simbolo di costante proposizionale allora la formula proposizionale risultante si comporterà, in termini di soddisfacibilità,
+Infatti se ogni predicato ground viene sostituito da un nuovo simbolo proposizionale allora la formula proposizionale risultante si comporterà, in termini di soddisfacibilità,
 esattamente come la formula originale. Ad esempio la formula ground $(p_1(f_2) \lor p_2(f_3, f_1(f_2))) \land \lnot p_1(f_2) \land p_3$ 
-è esattamente equivalente alla formula proposizionale $(s_2 \lor s_3) \land \lnot s_2 \land s_1$, nel senso che per ogni assegnamento per la seconda formula
+è equisoddisfacibile alla formula proposizionale $(s_2 \lor s_3) \land \lnot s_2 \land s_1$, nel senso che per ogni assegnamento per la seconda formula
 esiste un modello per la prima e viceversa.
 
 % ---------------------- END Semantica ----------------------
@@ -569,7 +570,7 @@ estese le forme normali descritte nel paragrafo della logica proposizionale per 
 
 
 La definizione per le forme ENNF e NNF per la logica del primo ordine è pressoché identica a quella della logica proposizionale.
-Come per la logica proposizionale, la trasformazione di una formula in ENNF/NNF preserva la relazione di conseguenza logica ed è sempre
+Come per la logica proposizionale, la trasformazione di una formula in ENNF/NNF preserva l'equivalenza ed è sempre
 possibile trasformare una formula in una equivalente in ENNF/NNF. 
 Il calcolo per la normalizzazione viene effettuato allo stesso modo ma con l'aggiunta di due regole per la negazione dei quantificatori:
 
@@ -577,45 +578,51 @@ $$ \lnot \forall x (\varphi) \vdash \exists x (\lnot \varphi) $$
 $$ \lnot \exists x (\varphi) \vdash \forall x (\lnot \varphi) $$
 
 
-Chiameremo \textit{prefisso di quantificatori} una lista di quantificatori (es. $\forall x_1 \forall x_2 \exists x_3$). 
+Viene chiamato \textit{prefisso di quantificatori} una lista di quantificatori (es. $\forall x_1 \forall x_2 \exists x_3$). 
 Un prefisso viene detto \textit{universale} se è composto esclusivamente da quantificatori universali e viene detto \textit{esistenziali} 
 se è composto esclusivamente da quantificatori esistenziali. Una formula è in formato PNF (Prenex Normal Form) se tutti e soli 
 i quantificatori si trovano all'inizio della formula. La classe di formule PNF è generata dalla seguente grammatica:
 
-$$ P_0 := \rho(P) $$
+$$ P_0 := \wp(P) $$
 $$ P := \top \mid \bot \mid A \mid \lnot P \mid (P \land P) \mid (P \lor P) $$
 
-Dove $\rho$ è un prefisso di quantificatori e $A$ è un atomo.
+Dove $\wp$ è un prefisso di quantificatori e $A$ è un atomo.
 La parte della formula generata dalla seconda regola viene spesso chiamata \textit{matrice}.
-È sempre possibile normalizzare una formula in PNF, è un processo sound, ma non è sempre possibile mantenere la relazione di conseguenza logica.
+È sempre possibile normalizzare una formula in PNF e anche in questo caso la normalizzazione preserva l'equivalenza.
 
 
 La skolemizzazione è una procedura che permette di eliminare i quantificatori esistenziali da una formula. 
-Sia $\rho$ un prefisso di quantificatori qualunque, la funzione $sk : F' \rightarrow F'$ può essere descritta in questo modo:
+Sia $\wp$ un prefisso di quantificatori qualunque, la funzione $sk : F' \rightarrow F'$ può essere descritta in questo modo:
 
 \begin{itemize}
-  \item Se la formula è del tipo $\exists x(\rho \phi)$ allora $sk$ rimuove il primo quantificatore esistenziale e sostituisce 
+  \item Se la formula è del tipo $\exists x(\wp \phi)$ allora $sk$ rimuove il primo quantificatore esistenziale e sostituisce 
   la variabile $x$ all'interno della formula con una nuova costante $f_{n+1}$, dove $n$ è il massimo indice di costante presente nella formula.
 
-  \item Se la formula è del tipo $\forall x_k ... x_{k+m-1} \exists x_{k+m} (\rho \phi)$ allora $sk$ rimuove 
+  \item Se la formula è del tipo $\forall x_k ... x_{k+m-1} \exists x_{k+m} (\wp \phi)$ allora $sk$ rimuove 
   il primo quantificatore esistenziale in ordine lessicografico e si sostituisce la variabile $x_{k+m}$ all'interno della formula con una nuova funzione 
   $f_{n+1}(x_k, ... , x_{k+m-1})$
   $m-1$-aria, dove $n$ è il massimo indice di funzione presente nella formula.
 \end{itemize}
 
 Applicando la funzione $sk$ tante volte quanto il numero di quantificatori esistenziali presenti nella formula si ottiene una formula 
-senza quantificatori esistenziali. Anche la skolemizzazione è un processo sound, ma non è detto che preservi la conseguenza logica.
-
+senza quantificatori esistenziali. La skolemizzazione è un processo sound, ma non è detto che preservi l'equivalenza.
+Questo per colpa del fatto che vengono introdotti nuovi simboli non presenti nella formula originale.
+Ad esempio si prenda il modello $\mathcal{M} = (\{1, 2\}, \mathfrak{I})$ con $p_1^\mathfrak{I} = \{(1, 2), (2, 1)\}$ e le formule
+$\varphi = \forall x_1 \exists x_2 (p_1(x_1, x_2))$ e la sua skolemizzazione $sk(\varphi) = \forall x_1 (p_1(x_1, f_1(x_1)))$.
+$\mathcal{M}$ è un modello per $\varphi$ ma non è un modello per $sk(\varphi)$ in quanto $f_1$ non è definita in $\mathfrak{I}$.
+È possibile però creare un nuovo modello $\mathcal{M}'$ come $\mathcal{M}$ ma aggiungendo $f_1^{\mathfrak{I}'} = \{(1, 2), (2, 1)\}$.
+$\mathcal{M}'$ è un modello sia per $sk(\varphi)$ che per $\varphi$. 
+Per queste ragioni le formule skolemizzate sono equisoddisfacibili alle formule originali ma non equivalenti.
 
 
 Combinando le tecniche apprese finora è possibile definire una procedura di normalizzazione che permette di trasformare una formula del primo ordine
 in formato CNF. Le formule CNF per il primo ordine sono definite come segue:
 
-$$ \zeta_0 := \rho(\zeta_1) $$
+$$ \zeta_0 := \wp(\zeta_1) $$
 $$ \zeta_1 := \xi \mid (\xi \land \zeta_1) $$
 $$ \xi := \top \mid \bot \mid L \mid (\xi \lor \xi ) $$
 
-Dove $\rho$ è un prefisso di quantificatori universale e $L$ un letterale. Per ottenere una formula CNF è sufficiente:
+Dove $\wp$ è un prefisso di quantificatori universale e $L$ un letterale. Per ottenere una formula CNF è sufficiente:
 
 \begin{enumerate}
   \item Normalizzare la formula in NNF
@@ -629,10 +636,10 @@ Dato che in una formula CNF tutte le variabili sono universalmente quantificate 
 Ad esempio, la formula CNF $\forall x_1 x_2 x_3 x_4 (\lnot p_1(x_1) \lor p_2(x_2) \lor p_3(x_3)) \land (\lnot p_4(x_4))$ può essere scritta come
 $(\lnot p_1(x_1) \lor p_2(x_2) \lor p_3(x_3)) \land (\lnot p_4(x_4))$ e quindi rappresentata
 in forma insiemistica come $\{\{\lnot p_1(x_1), p_2(x_2), p_3(x_3)\}, \{\lnot p_4(x_4)\}\}$.
-Un'osservazione interessante è che visto che tutte le variabili sono universalmente quantificate, è possibile rinominare le variabili di clausole diverse senza
+Un'osservazione interessante è che, visto che tutte le variabili sono universalmente quantificate, è possibile rinominare le variabili di clausole diverse senza
 cambiare il significato della formula. È quindi possibile normalizzare le clausole in modo tale che ogni coppia di clausole contenga variabili diverse.
-Un caso d'uso tipico è quello di voler unificare due letterali di due clausole diverse. Con l'assunzione che le variabili siano tutte diverse è possibile
-applicare l'algoritmo di unificazione senza occurrence-check visto nel capitolo sull'Unificazione.
+% ASSOLUTAMENTE NO Un caso d'uso tipico è quello di voler unificare due letterali di due clausole diverse. Con l'assunzione che le variabili siano tutte diverse è possibile
+% applicare l'algoritmo di unificazione senza occurrence-check visto nel capitolo sull'Unificazione.
 
 % ---------------------- END Skolemizzazione e Forme Normali ----------------------
 
@@ -641,7 +648,7 @@ applicare l'algoritmo di unificazione senza occurrence-check visto nel capitolo 
 % Da aggiungere il riferimento ai frattali e ai libri e disclamer sul fatto che non è una trattazione esaustiva
 Nei precedenti capitoli si è data la definizione di soddisfacibilità e validità per formule proposizionali e del primo ordine.
 In questa sezione verrà approfondito il discorso e verranno introdotte alcune nozioni fondamentali per 
-capire il funzionamento di un \textit{ATP system} (Automatic Theorem Prover), nonché 
+capire il funzionamento di un sistema \textit{ATP} (Automatic Theorem Prover), nonché 
 per capire le motivazioni che hanno spinto la creazione di sistemi ATP e i vincoli teorici con cui si devono confrontare.
 Questa non vuole essere una trattazione esaustiva dei teoremi di incompletezza di Gödel o
 della teoria della computazione,
@@ -658,7 +665,7 @@ se una formula è soddisfacibile/valida o meno (Una tautologia nel caso della lo
 Sorge spontanea la domanda: \textit{È possibile creare una procedura di decisione che risolva questo problema?} 
 
 In primo luogo è bene specificare che il problema della validità è riducibile al problema della soddisfacibilità.
-Si immagini di voler dimostrare che una formula $\varphi = (A_1 \land ... \land A_n) \Rightarrow C$ è valida.
+Si immagini di voler dimostrare che una formula $\varphi = (A_1 \land ... \land A_n) \rightarrow C$ è valida.
 Nel caso fosse valida allora la sua negazione $A_1 \land ... \land A_n \land \lnot C$ sarebbe insoddisfacibile.
 Nel caso $\lnot \varphi$ fosse soddisfacibile allora esisterebbe
  un modello $\mathcal{M}$ tale che $\mathcal{M} \models \lnot \varphi$ che quindi per definizione 
@@ -714,10 +721,10 @@ Un sistema formale è un insieme di questi quattro elementi:
 
 Se si considerano ad esempio le regole sintattiche definite in \ref{sec:sintassi_bool},
 la regola d'inferenza del modus ponens della sezione \ref{sec:assegnamenti}
-e come insieme di assiomi le formule proposizionali $\{s_1, s_1 \Rightarrow s_2\}$
+e come insieme di assiomi le formule proposizionali $\{s_1, s_1 \rightarrow s_2\}$
 si ottiene a tutti gli effetti un sistema formale basato sulla logica proposizionale.
 Un \textit{Teorema} è un assioma o una qualunque formula che può essere ottenuta applicando un numero finito di volte le regole d'inferenza agli assiomi.
-Nell'esempio precedente $s_2$ è un teorema del sistema formale ($s_1, (s_1 \Rightarrow s_2) \vdash s_2$).
+Nell'esempio precedente $s_2$ è un teorema del sistema formale ($s_1, (s_1 \rightarrow s_2) \vdash s_2$).
 Una derivazione sintattica di questo tipo è detta \textit{Dimostrazione}.
 Per coerenza si intende la proprietà che il sistema non possa dimostrare una contraddizione,
 come una formula del tipo $\psi \land \lnot \psi$.
@@ -725,17 +732,17 @@ Una \textit{Teoria} è un insieme $T$ di formule che rispetta le seguenti propri
 
 \begin{enumerate}
   \item $\mathcal{A} \subseteq T$ contiene gli assiomi.
-  \item Per ogni $P \in T^n$ se $P \vdash C$ per qualche regola d'inferenza del sistema formale allora $C \in T$ (Chiusura rispetto la derivazione). 
+  \item Per ogni $P \subseteq T$ se $P \vdash C$ per qualche regola d'inferenza del sistema formale allora $C \in T$ (Chiusura rispetto la derivazione). 
 \end{enumerate}
 
-Rispetto l'esempio precedente l'insieme $\{s_1, s_1 \Rightarrow s_2\, s_2\}$ è una teoria.
+Rispetto l'esempio precedente l'insieme $\{s_1, s_1 \rightarrow s_2, s_2\}$ è una teoria.
 In notazione si scrive $\vdash_T \varphi$ per indicare che la formula $\varphi$ è dimostrabile nella teoria $T$.
 
 
-Tornando alla tesi di Gödel, essa si basa sulla costruzione di una codifica delle formule e delle dimostrazioni
+Tornando al teorema di Gödel, essa si basa sulla costruzione di una codifica delle formule e delle dimostrazioni
 di PM nello stesso linguaggio formale PM. 
-Ogni formula (e regola di inferenza) $\varphi$ viene mappata in un numero naturale $\ulcorner  \varphi \urcorner $.
-In particolare grazie a questa codifica riesce a formalizzare i seguenti predicati all'interno di PM stesso:
+Ogni formula (e regola di inferenza) $\varphi$ viene codificata in un numero naturale $\ulcorner  \varphi \urcorner $.
+In particolare grazie a questa codifica, riesce a formalizzare i seguenti predicati all'interno di PM stesso:
 \begin{itemize}
   \item $Proof(x, y)$ che è vero se e solo se $x$ è la codifica di una dimostrazione di una formula codificata in $y$.
   \item $Thm(x)$ che è vero se e solo se esiste $y\in \mathbb{N} : Proof(y, x)$
@@ -745,12 +752,12 @@ In particolare grazie a questa codifica riesce a formalizzare i seguenti predica
 Un lemma fondamentale per la dimostrazione dei teoremi di Gödel è il \textit{Teorema del punto fisso}:
 \begin{enumerate}
   \item[] Per ogni formula $\varphi$ con un unica variabile libera $x$ allora esiste una formula $\gamma$ tale che:
-  $\vdash_{PM} \gamma \Leftrightarrow \varphi[x/\ulcorner \gamma \urcorner]$
+  $\vdash_{PM} \gamma \leftrightarrow \varphi[x/\ulcorner \gamma \urcorner]$
 \end{enumerate}
 
 Se si applica il teorema del punto fisso alla formula $\lnot Thm(x)$ si ottiene:
 \begin{enumerate}
-  \item[] Esiste una formula $\gamma$ tale che $\vdash_{PM} \gamma \Leftrightarrow \lnot Thm(\ulcorner \gamma \urcorner)$
+  \item[] Esiste una formula $\gamma$ tale che $\vdash_{PM} \gamma \leftrightarrow \lnot Thm(\ulcorner \gamma \urcorner)$
 \end{enumerate}
 
 $\gamma$ è chiamato \textit{enunciato gödeliano} e in pratica afferma "sono vero se e solo se non sono dimostrabile".
@@ -761,10 +768,10 @@ Il primo teorema di incompletezza si può quindi riformulare in questo modo:
   \item[1.] Se PM (o un sistema simile) è coerente allora $\nvdash_{PM} \gamma$ e $\nvdash_{PM} \lnot\gamma$
 \end{enumerate}
 
-Mentre secondo si può riformulare in questo modo:
+Mentre il secondo teorema si può riformulare in questo modo:
 
 \begin{enumerate}
-  \item[2.] Se PM (o un sistema simile) è coerente allora $\nvdash_{PM} Cons$
+  \item[2.] Se PM (o un sistema simile) è consistente allora $\nvdash_{PM} Cons$
 \end{enumerate}
 
 Si potrebbe fare un discorso molto lungo su cosa significhi \textit{'un sistema simile a PM'} ma 
@@ -792,7 +799,7 @@ creato dal logico Raphael Robinson.
 Si assuma che $\{q_1, ..., q_n\}$ siano gli assiomi di \textit{Q} e $\varphi$ una qualunque formula.
 Se esistesse una procedura di decisione per la logica allora varrebbe:
 
-$$ q_1, ..., q_n \vdash \varphi \text{ se e solo se } \vdash (q_1 \land ... \land q_n) \Rightarrow \varphi$$
+$$ q_1, ..., q_n \vdash \varphi \text{ se e solo se } \vdash (q_1 \land ... \land q_n) \rightarrow \varphi$$
 
 Quindi esisterebbe una procedura di decisione anche per \textit{Q},
 ma in \textit{Q} vale il primo teorema di Gödel e quindi si giunge a una contraddizione visto che 
@@ -852,7 +859,7 @@ devono ai risultati teorici dei logici
 Skolem, J. Herbrand e R. Robinson. 
 I risultati di Herbrand permettono di 'ridurre' il problema della soddisfacibilità di formule universalmente quantificate
 al problema della soddisfacibilità di una formula proposizionale. La strategia si basa sulla creazione di un modello 
-il quale dominio, detto universo di Herbrand, è generato da tutti i termini ground ottenibili galla combinazione dei termini della formula originale.
+il cui dominio, detto universo di Herbrand, è generato da tutti i termini ground ottenibili dalla combinazione dei termini della formula originale.
 L'universo di Herbrand è un insieme finito (se la formula non contiene funzioni) o infinito numerabile. Il secondo passo è 
 chiamato istanziazione ground e consiste nel sostituire tutte le variabili con un sottoinsieme finito di elementi dell'universo di Herbrand.
 Si ottiene così una formula ground che, come descritto in \ref{sec:semantica_fof}, può essere trasformata in una formula proposizionale e risolta da un Sat Solver. 
@@ -890,7 +897,7 @@ Una descrizione più dettagliata di Otter verrà data nel capitolo \ref{chap:vam
 \section{Il formato TPTP} \label{sec:tptp_lang}
 In questa sezione verrà descritto il formato TPTP \cite{tptpLan} (Thousands of Problems for Theorem Provers) 
 per la rappresentazione di problemi di logica del primo ordine.
-TPTP è una nota libreria di problemi utilizzata per testare e valutare diversi ATP systems (Automatic Theorem Prover).
+TPTP è una nota libreria di problemi utilizzata per testare e valutare diversi sistemi ATP (Automatic Theorem Prover).
 TPTP fornisce diversi formati per la rappresentazione dei problemi,
 in questa sezione ci si soffermerà sui formati \textit{CNF} (Clausal Normal Form) e \textit{FOF} (First Order Formula).
 
@@ -903,7 +910,7 @@ Per esempio il predicato $p_1(f_1(x_1), x_2, p_2)$
 può essere rappresentato come \texttt{p1(f1(X1), X2, p2)} o anche \texttt{pred(fun(VAR\_A), VAR\_B, costante)}.
 
 
-Per la traduzione dei simboli logici si utilizza la seguente mappatura:
+Per la traduzione dei simboli logici si utilizza la seguente tabella:
 
 \begin{table}[H]
   \centering
@@ -916,8 +923,8 @@ Per la traduzione dei simboli logici si utilizza la seguente mappatura:
     $\lnot$ & \texttt{\~} \\
     $\land$ & \texttt{\&} \\
     $\lor$ & \texttt{|} \\
-    $\Rightarrow$ & \texttt{=>} \\
-    $\Leftrightarrow$ & \texttt{<=>} \\
+    $\rightarrow$ & \texttt{=>} \\
+    $\leftrightarrow$ & \texttt{<=>} \\
     $\oplus$ & \texttt{\url{<~>}} \\
     $\forall$ & \texttt{!} \\
     $\exists$ & \texttt{?} \\
@@ -945,7 +952,7 @@ Data una lista di assiomi $A_1, ..., A_n$ e una congettura $C$:
 
 \begin{itemize}
   \item Se si da in input la lista di assiomi $A_1, ..., A_n$ l'ATP cerca di determinare la Soddisfacibilità della formula $A_1 \land ... \land A_n$.
-  \item Se vengono dati sia gli assiomi che la congettura l'ATP cerca di determinare se $A_1 \land ... \land A_n \Rightarrow C$ è valida.
+  \item Se vengono dati sia gli assiomi che la congettura l'ATP cerca di determinare se $A_1 \land ... \land A_n \rightarrow C$ è valida.
   \item Se invece viene data solo la congettura l'ATP cerca di determinare se $C$ è valida.
 \end{itemize}
 
@@ -963,7 +970,7 @@ Il formato per inserire un assioma o la congettura è il seguente:
   \texttt{fof(conj, conjecture, q(X)).} \\
 \end{center}
 
-L'ATP cercherà di determinare se la formula $(p(X) \land (p(X) \Rightarrow q(X))) \Rightarrow q(X)$ è valida.
+L'ATP cercherà di determinare se la formula $(p(X) \land (p(X) \rightarrow q(X))) \rightarrow q(X)$ è valida.
 Per le formula CNF invece il formato è il seguente:
 
 \begin{center}

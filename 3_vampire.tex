@@ -65,7 +65,7 @@ I tre componenti sono definiti all'interno di una \textbf{union} per risparmiare
     \item info è una struttura BitField di esattamente 64 bit
 \end{itemize}
 Essendo definiti all'interno di una union, ogni TermList dovrebbe occupare esattamente 64 bit di memoria.
-In vampire ogni variabile è rappresentata da un numero intero senza segno mentre i termini complessi
+In Vampire ogni variabile è rappresentata da un numero intero senza segno mentre i termini complessi
 composti da funzioni sono rappresentati dalla classe Term. 
 Se TermList rappresenta una variabile allora content shiftato di 2 bit verso destra rappresenta l'indice di quella variabile ($content/4$),
 nel caso rappresenti una funzione allora term punta ad un oggetto di tipo Term che contiene l'effettiva struttura della funzione.
@@ -137,7 +137,7 @@ Le formule sono rappresentate da una struttura ad albero esattamente come quelle
 La classe \textit{Formula} \ref{fig:vampire_formulas} è una classe astratta che si specializza nelle classi:
 \begin{itemize}
     \item \textit{AtomicFormula} che rappresenta una formula composta da un solo letterale.
-    \item \textit{BinaryFormula} rappresenta le formule binarie $A \Rightarrow B$, $A \Leftrightarrow B$ e $A \oplus B$.
+    \item \textit{BinaryFormula} rappresenta le formule binarie $A \rightarrow B$, $A \leftrightarrow B$ e $A \oplus B$.
     \item \textit{NegatedFormula} rappresenta le formule negate del tipo $\lnot A$.
     \item \textit{QuantifiedFormula} rappresenta le formule quantificate del tipo $\forall/\exists x1, x2, ..., xn : A$.
     \item \textit{JunctionFormula} rappresenta le formule composte dalla concatenazione di $\land$ e $\lor$.
@@ -215,7 +215,7 @@ Ad ogni iterazione il Main Loop seleziona una clausola dall'insieme delle clauso
 Questa clausola viene chiamata \textit{Given Clause} (\textit{GC}). 
 Lo step successivo consiste nell'applicare tutte le inferenze possibili tra la GC e le clausole attive.
 Le nuove clausole generate vengono aggiunte all'insieme delle clausole passive mentre la GC viene spostata nell'insieme delle clausole attive.
-Se una delle nuove clausole generate è la clausola vuota all'ora il Main Loop termina e la formula è insoddisfacibile.
+Se una delle nuove clausole generate è la clausola vuota allora il Main Loop termina e la formula è insoddisfacibile.
 Se invece l'insieme delle clausole passive viene totalmente svuotato allora il sistema è Saturo e la formula è soddisfacibile.
 Nel caso la formula non sia insoddisfacibile l'insieme delle clausole passive potrebbe non svuotarsi mai,
 in questo caso Il Main Loop termina quando sono terminate le risorse disponibili.
@@ -343,12 +343,12 @@ Un SubstitutionTree è una struttura ad albero in cui ogni nodo rappresenta una 
 Si aggiunge oltre all'insieme standard di variabili $\Sigma_x$ un altro insieme di variabili $\Sigma_x^* = \{*_1, *_2, ...\}$, dette speciali, che servono per la costruzione delle sostituzioni.
 I termini speciali sono termini che possono contenere anche variabili speciali oltre a quelle standard.
 
-Per sostituzione in un ST si intende una mappa da variabili speciali a termini speciali e vengono scritte in notazione:
+Per sostituzione in un ST si intende una corrispondenza da variabili speciali a termini speciali e vengono scritte in notazione:
 $\{*_i = \tau$, $*_j = \tau', ... \}$. 
 Per $im(\sigma)$ si indica l'insieme dei termini speciali che compaiono a destra del simbolo dell'uguaglianza in $\sigma$.
 Per $dom(\sigma)$ si indica l'insieme delle variabili speciali che compaiono a sinistra del simbolo dell'uguaglianza in $\sigma$.
 Per composizione di sostituzioni $\sigma_1 \circ \sigma_2$ si intende la sostituzione che si ottiene applicando $\sigma_2$ 
-ai termini mappati da $\sigma_1$. Ad esempio se $\sigma_1 = \{*_0 = f(*_1, *_2)\}$ e $\sigma_2 = \{*_1 = a, *_2 = g(*_3)\}$ allora
+ai termini di $\sigma_1$. Ad esempio se $\sigma_1 = \{*_0 = f(*_1, *_2)\}$ e $\sigma_2 = \{*_1 = a, *_2 = g(*_3)\}$ allora
 $(\sigma_1 \circ \sigma_2) = \{*_0 = f(a, g(*_3))\}$.
 
 Un nodo di un ST è rappresentato da una coppia $(\sigma, T)$ dove $\sigma$ è una sostituzione e $T$ è un insieme di ST.
@@ -370,7 +370,7 @@ Ogni ST rispetta i seguenti vincoli:
      dalla radice ad una foglia, l'immagine della composizione delle sostituzioni non contiene variabili speciali (è un termine standard):
      cioè vi sono solo termini standard in $im(\sigma_1 \circ ... \circ \sigma_n)$.
     \item Per ogni percorso $(\sigma_1, T_1), ... , (\sigma_n, T_n)$
-    dalla radice ad una foglia, ogni variabile speciale è mappata al massimo una volta per percorso:
+    dalla radice ad una foglia, ogni variabile speciale è associata al massimo una volta per percorso:
     cioè per ogni $i \neq j$, $dom(\sigma_i) \cap dom(\sigma_j) = \emptyset$.
 \end{enumerate}
 
@@ -382,10 +382,10 @@ Prima dell'inserimento le variabili dei termini vengono normalizzate
 in modo da avere gli indici più bassi possibili. I termini originali vengono poi salvati nelle LeafData per essere recuperati.
 Per la normalizzazione delle variabili vengono utilizzati i \textit{Variable Banks}, che sono essenzialmente un secondo indice delle variabili,
  che servono a tenere sempre disgiunte le variabili dei termini "query" (i termini passati come argomento in una funzione di ricerca)
-da quelle dei termini nel ST. Così facendo è possibile utilizzare, quando necessario, algoritmi di unificazione senza occurrence check 
-tra letterali query e letterali nel ST.
+da quelle dei termini nel ST. 
+Questo perchè di solito si vuole unificare due letterali di clausole diverse e quindi con variabili disgiunte.
 Ad esempio se si vuole inserire il termine $f(x, y)$ viene salvato nel ST come
-$f(x_{1/1}, x_{2/1})$ dove $/1$ indica il Variable Bank.
+$f(x_{1/1}, x_{2/1})$ dove $/1$ indica il Variable Bank 1.
 
 
 Vampire mette a disposizione numerose classi per gestire varie tipologie di indicizzazione tramite ST.
@@ -412,7 +412,7 @@ $newClauses := \emptyset$\;\\
 }
 
 
-\textit{LiteralSubstitutionTree} crea una mappa da simboli di predicato a ST in modo tale che ogni letterale 
+\textit{LiteralSubstitutionTree} crea un'associazione da simboli di predicato a ST in modo tale che ogni letterale 
 con lo stesso predicato venga inserito nello stesso ST. 
 Per inserire letterali con simboli di predicato diversi si può utilizzare la classe \textit{SubstitutionTree} a patto 
 che i predicarti abbiano stessa arità. Con la classe \textit{SubstitutionTree::UnificationsIterator} e 
@@ -424,12 +424,12 @@ Vampire non implementa un SAT-Solver ma ha un vasto sistema di interfacce per ut
 Al momento gli unici SAT-Solver supportati sono MiniSat e Z3, anche se l'inclusione di Z3 è ancora in fase sperimentale.
 Per utilizzare un SAT-Solver è necessario creare Clausole e letterali appositi per la rappresentazione delle costanti proposizionali.
 Nella figura \ref{fig:vampire_sat_solver} è mostrata la struttura delle classi e delle interfacce per il SAT-Solver.
-La classe \textit{SATLiteral} rappresenta una costante proposizionale ed è costituita da una coppia intero-booleano che rappresenta
-l'indice della costante e la sua polarità. 
+La classe \textit{SATLiteral} rappresenta un letterale proposizionale ed è costituita da una coppia intero-booleano che rappresenta
+l'indice del letterale e la sua polarità. 
 La classe \textit{SATClause} come la classe \textit{Clause} è costituita da un Array, in questo caso di \textit{SATLiteral}.
 La classe \textit{Sat2FO} è uno dei componenti Built-in di Vampire che si occupa di convertire letterali e clausole 
 del primo ordine (FO) in oggetti di tipo \textit{SATLiteral} e \textit{SATClause} (SAT) e viceversa. 
-La chiamata della funzione \textit{Sat2FO::toSat(Literal*)} aggiunge ad una bi-mappa il puntatore al letterale
+La chiamata della funzione \textit{Sat2FO::toSat(Literal*)} aggiunge ad una hashMap bidirezionale il puntatore al letterale
 e lo associa ad un nuovo numero unsigned $\geq 1$ se non è già presente altrimenti restituisce il numero già associato.
 La funzione \textit{Sat2FO::toFO(SATLiteral*)} restituisce il puntatore al letterale associato al numero passato come argomento
 se presente altrimenti \textit{nullptr}.

@@ -21,16 +21,16 @@ TPTP come descritto nella sezione \ref{sec:tptp_lang}.
 I problemi TPTP sono suddivisi in base al dominio di appartenenza e il formato (fof, cnf, tff, ecc).
 Il nome dei file segue il seguente schema:
 \begin{verbatim}
-    <domain><number>[+,-]{.<variant>}.p
+    <domain><number>[+,-]<version>.p
 \end{verbatim}
 
 dove '$<$domain$>$' è il dominio di appartenenza del problema composto da tre lettere maiuscole e
 '$<$number$>$' è un numero, generalmente di tre cifre, che identifica il problema all'interno del dominio.
 Il simbolo + indica che il problema è scritto con la sintassi \textit{fof} mentre il simbolo - indica
-che il problema è scritto con la sintassi \textit{cnf}. '.$<$variant$>$' è un suffisso opzionale che
-identifica una variante del problema ed in generale è un numero a tre cifre.
+che il problema è scritto con la sintassi \textit{cnf}. '$<$version$>$' è un suffisso che
+identifica la versione del problema.
 Ad esempio un nome valido è \textit{SYN001+1.003.p} che indica il problema 1 del dominio \textit{Syntactic},
-in formato \textit{fof}, variante 3. 
+in formato \textit{fof}, versione 1.003. 
 
 Non tutti i problemi sono adatti per essere risolti con l'algoritmo implementato ed è 
 stato quindi necessario filtrare i problemi in base a determinate caratteristiche.
@@ -49,7 +49,7 @@ quindi poco significativo per la sperimentazione, ma estremamente grande da rall
 riducendo il numero di potenziali problemi utili a \textbf{1965} per i problemi \textit{fof} e \textbf{2273} per i problemi \textit{cnf}.
 
 Successivamente tutti i problemi sono stati classificati tramite il classificatore descritto nella sezione \ref{sec:classifier}.
-Si ricorda che i problemi sono dati in formato $(A_1 \land A_2 \land ... \land A_n) \Rightarrow C$ dove 
+Si ricorda che i problemi sono dati in formato $(A_1 \land A_2 \land ... \land A_n) \rightarrow C$ dove 
 $A_1, A_2, ..., A_n$ sono assiomi e $C$ è la congettura, mentre 
 sia l'algoritmo di decisione che Vampire lavorano sul problema negato ovvero $A_1 \land A_2 \land ... \land A_n \land \lnot C$.
 Per classificazione di un problema $P$ con congettura si intende quindi il frammento di appartenenza del problema negato $\lnot P$.
@@ -120,7 +120,7 @@ Il comando utilizzato per l'esecuzione di Vampire è quindi il seguente:
 \end{verbatim}}
 Dove \textit{$<$problem$>$} è il problema da risolvere. 
 Come limiti di tempo e memoria sono stati impostati rispettivamente 10 minuti e 12GB di ram.
-L'algoritmo Binding è stato eseguito con i seguenti parametri:
+L'algoritmo per i frammenti Binding è stato eseguito con i seguenti parametri:
 {
 \small    
 \begin{verbatim}
@@ -131,7 +131,7 @@ Macbook Pro 2018, 2.9 GHz 6-Core Intel Core i9, 16 GB 2400 MHz DDR4 sistema oper
 Gli esperimenti sono stati poi ripetuti su un computer Windows 11 con processore Intel Core i9-13900K e ram 32GB DDR5
 sul sottosistema Windows for Linux (WSL) e si sono ottenuti tempi di esecuzione, come da aspettativa, più bassi ma assolutamente coerenti,
 mentre per memoria i valori sono rimasti esattamente gli stessi.
-I tempi delle tabelle si riferiscono ai tempi rilevati dalla macro $Time\_Trace$ posta all'inizio dell'algoritmo Binding 
+I tempi delle tabelle si riferiscono ai tempi rilevati dalla macro $Time\_Trace$ posta all'inizio dell'algoritmo per i frammenti Binding 
 e all'inizio del \textit{MainLoop} di Vampire escludendo quindi i tempi di parsing e preprocessing.
 Per una maggior accuratezza, i tempi sono stati calcolati come media di 5 esecuzioni.
 
@@ -306,18 +306,18 @@ Anche qui nella tabella dei tempi i problemi che fanno uso di questa ottimizzazi
 
 \section{Conclusioni e Possibili Sviluppi futuri}
 Nonostante i problemi analizzati si siano rilevati poco significativi, 
-i risultati ottenuti sono comunque interessanti e rivelano le potenzialità dell'algoritmo Binding.
+i risultati ottenuti sono comunque interessanti e rivelano le potenzialità dell'algoritmo.
 La sperimentazione ha inoltre riconfermato la netta superiorità dei Sat solver o più in generale di sistemi 
 basati su SMT rispetto ad algoritmi puramente basati su Resolution per la risoluzione di problemi proposizionali.
-Guardando l'insieme dei risultati si nota che l'algoritmo ottimizzato è in grado di risolvere più problemi rispetto a Vampire 
+Guardando tutto l'insieme dei risultati si nota che l'algoritmo ottimizzato è in grado di risolvere più problemi rispetto a Vampire 
 e in generale 'vince' in termini di tempo e memoria per la maggior parte dei problemi.
 Se si considerano il tempo totale per l'esecuzione dei benchmark si vede che l'algoritmo naif impiega circa 1 ora 
-mentre Vampire impiega circa 4.5 ore e l'algoritmo ottimizzato impiega solo 16 secondi.
+mentre Vampire impiega circa 4.5 ore e l'algoritmo ottimizzato impiega solo 15.6 secondi.
 Questi tempi così alti sono dovuti ovviamente ai timeout.
 Considerando i problemi comuni risolti sia da Vampire e l'algoritmo naif si vede che l'algoritmo naif impiega
 circa 19.5 minuti mentre Vampire impiega solo 4.8 minuti. 
 Questo distacco è dovuto principalmente ai problemi Disjunctive. 
-Se non si considerano i problemi Disjunctive, l'algoritmo naif impiega circa 400 millisecondi contro i 4.3 minuti di Vampire.
+Se non si considerano i problemi Disjunctive, l'algoritmo naif impiega infatti circa 400 millisecondi contro i 4.3 minuti di Vampire.
 Il conteggio totale delle vittorie è di 337 a 109 in favore dell'algoritmo naif.
 Se non si considerano i problemi puramente ground le vittorie dell'algoritmo naif scendono a 273 contro 109 di Vampire.
 Passando invece all'algoritmo ottimizzato, se si considerano solo i problemi risolti sia da Vampire che dall'algoritmo ottimizzato,
@@ -327,45 +327,60 @@ il totale è di 5 secondi per Vampire e 5.9 secondi per l'algoritmo ottimizzato.
 Di questi 5.9 secondi però, 5.8 sono impiegati per risolvere il problema 136 cioè il $98\%$ del tempo totale.  
 Se non si considera questo problema l'algoritmo ottimizzato impiega 0.1 secondi contro i 4.9 secondi di Vampire.
 Il conteggio delle vittorie è di 426 a 21 in favore dell'algoritmo ottimizzato. 
-Se si escludono i problemi ground il conteggio scende a 150 a 21.
+Se si escludono i problemi ground e i problemi risolti con la quarta ottimizzazione, il conteggio scende a 150 a 21.
 
 A parte il problema 136, la differenza di tempo tra Vampire e l'algoritmo ottimizzato è davvero minima, nell'ordine di 
 decimi di millisecondi e non è quindi possibile stabilire quale approccio sia migliore per problemi non proposizionali.
 Il set di benchmark andrebbe ampliato con problemi più complessi per effettuare un confronto più significativo.
 Anche generando dei problemi più specifici per il frammento.
-Moti dei problemi selezionati infatti fanno parte del frammento Bernays–Sch¨onfinkel, quindi senza funzioni, oppure
+Moti dei problemi selezionati infatti fanno parte del frammento Bernays–Schönfinkel, quindi senza funzioni, oppure
 spesso contengono solo predicati unari o binari.
 Sarebbe interessante anche effettuare un confronto con altri theorem prover come IProver e E.
 
 Il primo passo da compiere per migliorare l'algoritmo è quella di modificare la procedura di preprocessing.
 Modificando le funzioni standard di Vampire per la trasformazione in CNF e il Namig si
-eliminerebbe la necessità di creare i \textit{booleanBinding} arrivando a dimezzare il numero di letterali creati.
+eliminerebbe la necessità di creare i \textit{booleanBinding} arrivando anche a dimezzare il numero di letterali creati.
 Andrebbe anche studiata la semplificazione updr (Unused definitions and pure predicate removal) e 
 applicata, se possibile, al preprocessing.
 Andando ad utilizzare direttamente il Sat solver senza passare dall'interfaccia di Vampire 
 si potrebbero sfruttarne appieno le potenzialità. 
-Ad esempio quando viene trovato un mus, viene creato un Sat solver da zero e inizializzato con tutte le Sat clausole associate ai letterali del mus.
+Ad esempio, in questa implementazione quando viene trovato un mus, viene creato un Sat solver da zero e inizializzato con tutte le Sat clausole associate ai letterali del mus.
 Questo comporta un notevole dispendio di tempo. 
 Una strategia alternativa sarebbe quella di aggiungere le clausole del mus nel corso della visita dell'albero di ricorsione 
 e eliminarle quando non più necessarie. 
-Al momento nell'interfaccia di Vampire è possibile solo aggiungere clausole ma non rimuoverle ed 
+Al momento, nell'interfaccia di Vampire è possibile solo aggiungere clausole ma non rimuoverle ed 
 è per questo che l'algoritmo non è stato implementato in questo modo fin da subito.
 Per quanto riguarda il problema 136, il motivo per cui Vampire impiega così poco tempo 
 è attribuibile alle euristiche di selezione delle clausole. 
-Andrebbe indagato se e quali euristiche possono essere applicate anche all'algoritmo Binding per guidarne l'esecuzione.
+Andrebbe indagato se e quali euristiche possono essere applicate anche all'algoritmo implementato per guidarne l'esecuzione.
 L'ottimizzazione groundMus è stata l'euristica più significativa che ha permesso di risolvere la maggior parte dei problemi
 che l'algoritmo naif non riusciva a risolvere.
 % Se una formula contiene molti letterali ground, allora è probabile che portino ad una contraddizione.
 % Se invece non ne contiene o ne contiene pochi il groundMus dovrebbe terminare comunque in tempi ragionevoli.
-Il problema che così com'è implementato il sorting degli implicanti, l'ordine di priorità è di selezione è dato esclusivamente da come 
+Il problema che così com'è implementato il sorting degli implicanti, l'ordine di priorità di selezione dei letterali ground è dato esclusivamente da come 
 viene data in input la formula. 
 Una strategia sarebbe quella di dare un ordine di priorità in base al numero di volte che un letterale ground compare
 con polarità opposta in una Sat clausola per massimizzare la probabilità di trovare una contraddizione.
 Con questa strategia probabilmente si riuscirebbe a risolvere il problema 136 in tempi più ragionevoli.
 Questa analisi non dovrebbe essere molto diversa da quella fatta da updr.
+Un altro aspetto del preprocessing è che non è escluso che vi siano dei LiteralBinding ground.
+Questo accade perchè i booleanBinding vengono creati prima della skolemizzazione mentre i LiteralBinding vengono creati dopo.
+Si potrebbe aggiungere un'opzione per scomporre i LiteralBinding ground una volta skolemizzati 
+o comunque aggiungere un controllo del tipo che se la sotto formula ha un prefisso esistenziale con polarità positiva (o universale con polarità negativa) allora non crea il booleanBinding.
+Seguendo questa strada però bisognerebbe aggiungere uno step in più per skolemizzare la FBE e 
+inoltre verificare che il Naming non causi problemi.
+Non è stato indagato su come questo aspetto possa impattare sulle prestazioni dell'algoritmo.
+Da un lato la creazione di questi booleanBinding semplifica il lavoro del Sat solver durante la ricerca dell'implicante,
+dall'altro però, potrebbe appesantire il lavoro che viene fatto all'interno dell'algoritmo.
+Inoltre questo aspetto potrebbe andare in conflitto con l'ottimizzazione proposta in precedenza per il groundMus.
+Un altro aspetto critico da migliorare, sempre riguardo la ricerca dei mus, è la ricerca dei letterali unificanti all'interno del SubstitutionTree.
+In particolare, andrebbe creato un iteratore ad hoc per navigare il SubstitutionTree.
+In questa implementazione ad ogni livello viene creato un nuovo iteratore che spesso propone letterali già presenti nella soluzione
+facendo molto lavoro di unificazione inutile.
 
-Infine, l'approccio proposto si è dimostrato promettente, 
-tuttavia, sono richieste ulteriori indagini e sviluppi per formulare conclusioni definitive.
+In conclusione, l'approccio proposto si è dimostrato promettente e vi sono molte strade da esplorare 
+per migliorare l'algoritmo e renderlo più competitivo, 
+tuttavia, sono richieste ulteriori indagini e sviluppi per formulare conclusioni definitive su quale sia l'approccio migliore.
 
 
 

@@ -6,8 +6,7 @@ Nella sezione \ref{sec:sat_val},
 sono stati esaminati i teoremi di Gödel e Church, 
 mentre nella sezione \ref{sec:resolution} sono state viste alcune delle loro conseguenze. 
 La logica del primo ordine è intrinsecamente indecidibile; tuttavia, 
-è possibile identificare alcune sue componenti che risultano decidibili.
-Queste componenti sono dette \textit{Frammenti} della logica del primo ordine.
+è possibile identificare alcuni suoi \textit{Frammenti} sintattici che risultano decidibili.
 Si pensi ad esempio ai risultati di Herbrand citati nella sezione \ref{sec:resolution}.
 Se una formula non contiene funzioni ed è universalmente quantificata allora l'universo di Herbrand è finito e 
 vi sono un numero finito di possibili instanziazioni ground. 
@@ -21,10 +20,10 @@ In questo capitolo verrà descritta una famiglia di frammenti relativamente rece
 \section{Tassonomia dei Frammenti Binding} \label{sec:binding_taxonomy}
 Si dice che una formula del primo ordine appartiene alla classe \textit{Boolean Binding} (BB) se generata dalla seguente grammatica:
 
-$$ \varphi :=  \top \mid \bot \mid (\varphi \lor \varphi) \mid (\varphi \land \varphi) \mid \mathcal{P}(\psi) $$
+$$ \varphi :=  \top \mid \bot \mid (\varphi \lor \varphi) \mid (\varphi \land \varphi) \mid \wp(\psi) $$
 $$ \psi := \rho \mid (\psi \lor \psi) \mid (\psi \land \psi) $$
 
-Dove $\mathcal{P}$ è un prefisso di quantificatori e $\rho$ è una combinazione booleana di letterali che hanno come argomento 
+Dove $\wp$ è un prefisso di quantificatori e $\rho$ è una combinazione booleana di letterali che hanno come argomento 
 tutti la stessa lista di termini. 
 Una formula di questo tipo verrà chiamata con il nome $\tau$-Binding, dove $\tau$ indica la lista di termini comune.
 Ad esempio sono $(f_1(x_1), f_2)$-Binding le formule: 
@@ -66,11 +65,10 @@ In particolare verrà descritto l'algoritmo di decisione per i frammenti 1B e CB
 Data una formula del frammento 1B è facile osservare che il processo di skolemizzazione
 converte la formula in formato $\forall 1B$. 
 Se si applica la stessa procedura ad una formula CB, le sottoformule generate dalla regola $\psi$ saranno del tipo:
-$\mathcal{P} (\rho_1 \land ... \land \rho_n)$ con $\mathcal{P}$ un prefisso universale e $(\rho_1 \land ... \land \rho_n)$
+$\wp (\rho_1 \land ... \land \rho_n)$ con $\wp$ un prefisso universale e $(\rho_1 \land ... \land \rho_n)$
 $\tau$-Binding. In questo caso è possibile distribuire il '$\forall$' sui vari $\tau$-Binding e si ottiene così una formula 
-equisoddisfacibile in formato $\forall$1B.
-
-
+equisoddisfacibile in formato $\forall$1B. Questo consente di concentrarsi sullo studio del frammento $\forall$1B
+per la risoluzione del problema della soddisfacibilità dei frammenti 1B e CB. 
 
 \newtheorem{thm}{Teorema: Decidibilità dei frammenti 1B e CB}[section]
 \begin{thm}
@@ -94,9 +92,6 @@ i requisiti sintattici del frammento DB. $S$ è quindi una procedura di decision
 del primo ordine ma ciò è in contraddizione con il teorema di Church.
 \end{proof}
 
-
-Il processo di skolemizzazione consente di concentrarsi sullo studio del frammento $\forall$1B
-per la risoluzione del problema della soddisfacibilità. 
 Prima di descrivere l'algoritmo bisogna introdurre tre nuovi concetti:
 L'Unificazione per $\tau$-Binding, Implicante di una formula del primo ordine e la conversione booleana di un $\tau$-Binding.
 Data una formula del primo ordine $\varphi$ per Implicante di $\varphi$ si intende la conversione del primo ordine di
@@ -106,7 +101,7 @@ $\forall x_1 (p_1(x_1) \lor p_2(x_1)) \land (p_1(f_1) \lor \exists x_2 (p_3(x_2)
 ha la seguente struttura booleana  $s_1 \land (s_2 \lor s_3) \land \lnot s_2 \land s_3$.
 Un implicante (e anche il solo) di questa formula è l'insieme $\{s_1, s_3\}$ che ri-convertito nel primo ordine diventa
 l'insieme $\{\forall x_1 (p_1(x_1) \lor p_2(x_1)), \exists x_2 (p_3(x_2))\}$.
-In questo caso è stata creata implicitamente un bi-mappa tra costanti proposizionali e formule del primo ordine:
+In questo caso è stata creata implicitamente una funzione biettiva tra costanti proposizionali e formule del primo ordine:
 \begin{itemize}
     \item $s_1 \rightleftarrows \forall x_1 (p_1(x_1) \lor p_2(x_1))$
     \item $s_2 \rightleftarrows p_1(f_1)$
@@ -116,11 +111,11 @@ Un $\tau_1$-Biding e un $\tau_2$-Biding sono detti unificabili se e solo se l'in
 Si può anche dire che sono unificabili sse 
 le due liste $\tau_1$ e $\tau_2$ hanno la stessa lunghezza $n$ e dato un qualunque predicato $p$ $n$-ario
 $p(\tau_1)$ e $p(\tau_2)$ sono unificabili. 
-Una insieme di $\tau$-Biding è unificabile sse esiste una sostituzione che unifica a due a due tutti gli elementi dell'insieme.
+Un insieme di $\tau$-Biding è unificabile sse esiste una sostituzione che unifica a due a due tutti gli elementi dell'insieme.
 Dato un $\tau$-Binding $\phi$ la sua conversione booleana $bool(\phi)$ è una formula proposizionale che si ottiene 
 da $\phi$ mantenendo la sua struttura proposizionale, eliminando gli argomenti dai letterali e convertendo
 i simboli di predicato in simboli di costante con lo stesso indice. Ad esempio il $\tau$-Binding
-$((p_1 \land p_4) \lor p_2 \lor \lnot p_4)(\tau)$ viene convertito nella seguente formula proposizionale $(s_1 \land s_4) \lor s_2 \lor \lnot s_4$
+$((p_1 \land p_4) \lor p_2 \lor \lnot p_4)(\tau)$ viene convertito nella seguente formula proposizionale $(s_1 \land s_4) \lor s_2 \lor \lnot s_4$.
 
 A questo punto è possibile enunciare il teorema di caratterizzazione della soddisfacibilità del frammento $\forall$1B.
 
@@ -156,6 +151,26 @@ Dal teorema appena descritto si estrapola intuitivamente l'algoritmo per la sodd
     }
     \Return{$\bot$}
   \end{algorithm}
+
+L'idea di base del teorema è che data una formula $\varphi$ del frammento $\forall$1B,
+se esiste un modello $\mathcal{M}$ di $\varphi$ allora esiste anche qualche implicante $I$ di $\varphi$ soddisfatto dal modello.
+Il modello soddisfa quindi la congiunzione degli elementi di $I$: $\mathcal{M} \models \phi_1 \land ... \land \phi_n$.
+Ogni $\phi_i$ è un particolare $\tau$-Binding e la congiunzione è ancora una formula del frammento $\forall$1B. 
+Se la congiunzione di tutti i $\phi_i$ è insoddisfacibile allora 
+esisterà un sottoinsieme $U$ di $I$ che contiene una contraddizione.
+Presi tutti i sottoinsiemi $\{\gamma\}$ di ordine 1 di $I$. 
+Se $\gamma$ è insoddisfacibile allora contiene una contraddizione al suo interno, ma allora visto che tutti i letterali
+al suo interno hanno la stessa lista di termini, il problema di determinare se $\gamma$ è soddisfacibile si riduce al problema
+di determinare se $bool(\gamma)$ è soddisfacibile.
+Presi adesso tutti i sottoinsiemi $\{\gamma_1, \gamma_2\}$ di ordine 2 di $I$.
+Se $\gamma_1 \land \gamma_2$ è insoddisfacibile allora o uno tra $\gamma_1$ e $\gamma_2$ contiene una contraddizione al suo interno oppure 
+si contraddicono a vicenda. 
+In questo caso visto che due letterali non possono contraddirsi se non sono unificabili, 
+e visto che $\gamma_1$ e $\gamma_2$ sono $\tau$-Binding universalmente quantificati, $\gamma_1$ e $\gamma_2$ devono essere per forza unificabili.
+Anche qui il problema si riduce al problema di determinare se $bool(\gamma_1) \land bool(\gamma_2)$ è soddisfacibile 
+o anche se $bool(\gamma_1^\sigma \land \gamma_2^\sigma)$ è soddisfacibile, dove $\sigma$ è l'unificatore di $\gamma_1$ e $\gamma_2$.
+Questo discorso si può generalizzare e arrivare alla conclusione che se $\phi_1 \land ... \land \phi_n$ è insoddisfacibile allora
+contiene un sottoinsieme di $\tau$-Binding unificabile che è insoddisfacibile.
 
 I prossimi capitoli si concentreranno sullo studio dei dettagli tecnici per l'implementazione di questo algoritmo,
 con annesse osservazioni sulle sfide implementative e una analisi dei risultati sperimentali ottenuti.

@@ -62,7 +62,7 @@ Il preprocessing seguirà pressochè questa struttura:
     \item Creazione della formula booleana esterna (FBE) e associazione dei booleanBinding
     \item Naming della FBE
     \item Trasformazione in NNF della FBE
-    \item Creazione dei literalBinding e Sat-Clausificazione delle formule mappate dai booleanBinding
+    \item Creazione dei literalBinding e Sat-Clausificazione delle formule associate ai booleanBinding
     \item Creazione delle Sat-Clausole della FBE
 \end{enumerate}
 
@@ -93,7 +93,7 @@ La creazione della FBE e l'associazione dei booleanBinding avviene tramite l'alg
     \Return new AtomicFormula(b)\;
 }
 
-\Case{A$[\Leftrightarrow, \Rightarrow, \oplus]$B}{
+\Case{A$[\leftrightarrow, \rightarrow, \oplus]$B}{
     \Return new BinaryFormula(A, connective of $\varphi$, B)\;
 }
 }
@@ -172,23 +172,23 @@ lo stesso indice.
 Si prenda ad esempio la formula del frammento \cb:
 
 $$ (\forall x_1, x_2 ((p_1(x_1) \lor p_2(x_1)) \land p_2(f_1(x_2))) 
-\land  \forall x_1 (p_3(x_1) \Rightarrow p1(x_1)))  
-\lor (\forall x_1(p_2(x_1)) \Rightarrow p_4)
+\land  \forall x_1 (p_3(x_1) \rightarrow p1(x_1)))  
+\lor (\forall x_1(p_2(x_1)) \rightarrow p_4)
 $$
 
 Il primo passo di preprocessing prevede la rettificazione e la trasformazione in ENNF.
-La formula è già rettificata mentre la trasformazione in ENNF porta all'eliminazione del $\Rightarrow$:
+La formula è già rettificata mentre la trasformazione in ENNF porta all'eliminazione del $\rightarrow$:
 
 $$ (\forall x_1, x_2 ((p_1(x_1) \lor p_2(x_1)) \land p_2(f_1(x_2))) 
 \land  \forall x_1 (\lnot p_3(x_1) \lor p1(x_1)))  
-\lor (\forall x_1(p_2(x_1)) \Leftrightarrow p_4)
+\lor (\forall x_1(p_2(x_1)) \leftrightarrow p_4)
 $$
 
 La creazione della FBE porta alla generazione di un booleanBinding per ogni sottoformula quantificata:
 
 $$ (b_1 
 \land  b_2)  
-\lor (b_3 \Leftrightarrow p_4)
+\lor (b_3 \leftrightarrow p_4)
 $$
 
 La mappa bindingFormulas contiene le seguenti coppie:
@@ -261,7 +261,7 @@ Gli ultimi due step sono la clausificazione della FBE:
 $$ \{\{b_1, \lnot b_3, p_4\}, \{b_2, \lnot b_3, p_4\}, \{b_1, b_3, \lnot p_4\}, \{b_2,  b_3, \lnot p_4\}\} $$
 E la SatClausificazione tramite sat2Fo:
 $$ \{\{s_1, \lnot s_2, s_3\}, \{s_4, \lnot s_2, s_3\}, \{s_1, s_2, \lnot s_3\}, \{s_4,  s_2, \lnot s_3\}\} $$
-Che crea internamente una bi-mappa che associa ogni satletterale ad un letterale:
+Che crea internamente una hashMap bidirezionale che associa ogni satletterale ad un letterale:
 \begin{multicols}{2}
 \begin{itemize}
     \item $s_1 \leftrightarrow b_1$
@@ -371,6 +371,7 @@ e chiama la funzione \ref{alg:mus} che prende in input il letterale e un insieme
 
 
 \begin{algorithm}[H] \label{alg:mus}
+    \small
     \caption{Maximal Unifiable Subsets}
     \KwSty{Firma:}{ mus($literal$, $FtoFree$)}\\
     \KwIn{$literal$ un puntatore ad un letterale, $FtoFree$ un puntatore ad una lista di letterali}
@@ -703,13 +704,13 @@ Entrambi gli algoritmi hanno una struttura di visita dell'albero sintattico in p
         \Return $fragment$\;
     }
 
-    \Case{$A \Leftrightarrow B$}{
-        \Return $compare(classify(A \Rightarrow B), classify(B \Rightarrow A))$\;
+    \Case{$A \leftrightarrow B$}{
+        \Return $compare(classify(A \rightarrow B), classify(B \rightarrow A))$\;
     }
     \Case{$A \oplus B$}{
-        \Return $classify(A \Leftrightarrow B).complementary()$\;
+        \Return $classify(A \leftrightarrow B).complementary()$\;
     }
-    \Case{$A \Rightarrow B$}{
+    \Case{$A \rightarrow B$}{
         \Return $compare(classify(\lnot A), classify(B))$\;
     }
 }
@@ -769,7 +770,7 @@ In particolare il complementare di un \ob è \ob mentre il complementare di un \
     \Case{$\lnot A$}{
         \Return $innerClassify(A).complementary()$\;
     }
-    \Case{$A [\Rightarrow, \Leftrightarrow, \oplus] B$}{
+    \Case{$A [\rightarrow, \leftrightarrow, \oplus] B$}{
         \Return $innerCompare(innerClassify(A), innerClassify(B), \text{connective of } \varphi)$\;
     }
     \Else{
@@ -832,7 +833,7 @@ sono una combinazione di più \ob e non hanno un letterale di rappresentanza.
 Due frammenti \cb rimangono \cb solo se il loro connettivo è $\land$.
 La combinazione di un \ob con un \cb è un \cb se il connettivo è $\land$. Stesso discorso per i \dbb e il connettivo $\lor$.
 In tutti gli altri casi la combinazione è \textit{None}. 
-Nell'algoritmo \ref{alg:innerCompare} sono stati omessi i casi con connettivi $\Rightarrow, \Leftrightarrow, \oplus$ 
+Nell'algoritmo \ref{alg:innerCompare} sono stati omessi i casi con connettivi $\rightarrow, \leftrightarrow, \oplus$ 
 in quanto non sono riconducibili a formule composte da $\land$ e $\lor$ come è stato fatto ad esempio nell'algoritmo \ref{alg:classifier}.
 Con la funzione complementary applicata ad una coppia: (Fragment, Literal).complementary() si intende la coppia (Fragment.complementary(), Literal).
 
