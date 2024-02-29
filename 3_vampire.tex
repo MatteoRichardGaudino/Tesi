@@ -399,19 +399,26 @@ Se retrieveSubstitutions è true, allora restituisce anche la sostituzione.
 Tornando all'esempio dell'inizio della sezione, per trovare le clausole su cui si può applicare la regola di resolution
 con la GC un algoritmo più semplice e molto più efficiente rispetto a quello proposto inizialmente
 consiste nell'inserire tutte le clausole attive nel ST e
-chiamare la funzione $getUnifications$ su ogni letterale della GC:
+chiamare la funzione $getUnifications$ su ogni letterale della GC.
+È possibile vedere un esempio di ricerca nell'algoritmo \ref{alg:unification_example}.
 
-$newClauses := \emptyset$\;\\
-\ForEach{$l \in GC$}{
-    $iter := getUnifications(l, true, true)$\;\\
-    \While{$iter.hasNext()$}{
-        $res := iter.next()$\;\\
-        $(l': Literal*, C: Clause*) := res.leafData()$\;\\
-        $\sigma := res.substitution()$\;\\
-        $newClauses.add(resolution(l, l', GC, C, \sigma))$\;
+\begin{algorithm}
+    \caption{Esempio di ricerca di clausole unificabili con la GC}
+    \label{alg:unification_example}
+    \KwIn{$GC$: Clausola data in input e un ST contenente le clausole attive}
+    \KwOut{$newClauses$: Insieme dei risolventi della GC}
+    $newClauses := \emptyset$\;
+    \ForEach{$l \in GC$}{
+        $iter := getUnifications(l, true, true)$\;
+        \While{$iter.hasNext()$}{
+            $res := iter.next()$\;
+            $(l': Literal*, C: Clause*) := res.leafData()$\;
+            $\sigma := res.substitution()$\;
+            $newClauses.add(resolution(l, l', GC, C, \sigma))$\;
+        }
     }
-}
-
+    \Return $newClauses$\;
+\end{algorithm}
 
 \textit{LiteralSubstitutionTree} crea un'associazione da simboli di predicato a ST in modo tale che ogni letterale 
 con lo stesso predicato venga inserito nello stesso ST. 
@@ -427,7 +434,7 @@ Per utilizzare un SAT-Solver è necessario creare clausole e letterali appositi 
 Nella figura \ref{fig:vampire_sat_solver} è mostrata la struttura delle classi e delle interfacce per il SAT-Solver.
 La classe \textit{SATLiteral} rappresenta un letterale proposizionale ed è costituita da una coppia intero-booleano che rappresenta
 l'indice del letterale e la sua polarità. 
-La classe \textit{SATClause} come la classe \textit{Clause} è costituita da un Array, in questo caso di \textit{SATLiteral}.
+La classe \textit{SATClause}, come la classe \textit{Clause}, è costituita da un Array, in questo caso di \textit{SATLiteral}.
 La classe \textit{Sat2FO} è uno dei componenti Built-in di Vampire che si occupa di convertire letterali e clausole 
 del primo ordine (FO) in oggetti di tipo \textit{SATLiteral} e \textit{SATClause} (SAT) e viceversa. 
 La chiamata della funzione \textit{Sat2FO::toSat(Literal*)} aggiunge a una hashMap bidirezionale il puntatore al letterale
