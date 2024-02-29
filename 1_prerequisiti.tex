@@ -271,8 +271,8 @@ Si introducono tre nuovi insiemi di simboli:
   \item $\Sigma_x = \{x_1, x_2, ...\}$ insieme di simboli di variabile
 \end{itemize}
 
-Si definisce la funzione $arity : \Sigma_f \cup \Sigma_p \rightarrow \mathbb{N}$ che associa ad ogni simbolo di funzione o predicato la sua arità.
-Funzioni e predicati di arità 0 sono detti rispettivamente \textit{Funzioni costanti} e \textit{Predicati costanti}.
+Si definisce la funzione $arity : \Sigma_f \cup \Sigma_p \rightarrow \mathbb{N}$ che associa ad ogni simbolo di funzione o predicato la sua arietà.
+Funzioni e predicati di arietà 0 sono detti rispettivamente \textit{Funzioni costanti} e \textit{Predicati costanti}.
 I simboli contenuti in $\Sigma_f \cup \Sigma_p$ sono detti \textit{simboli non logici} e ogni suo sottoinsieme è detto \textit{tipo}.
 Un \textit{termine} è una stringa generata dalla seguente grammatica:
 
@@ -282,12 +282,12 @@ Dove $f$ è un simbolo di funzione tale che $arity(f) = n$. In altre parole:
 \begin{itemize}
   \item Ogni variabile è un termine
   \item Ogni funzione costante è un termine
-  \item Se $\tau_1, ..., \tau_n$ sono termini e $f$ è un simbolo di funzione di arità $n$ allora $f(\tau_1, ..., \tau_n)$ è un termine
+  \item Se $\tau_1, ..., \tau_n$ sono termini e $f$ è un simbolo di funzione di arietà $n$ allora $f(\tau_1, ..., \tau_n)$ è un termine
 \end{itemize}
 
 Si indica con $T$ l'insieme di tutti i termini generati dalla grammatica precedente.
 Verranno chiamati \textit{Atomo} tutte le stringhe del tipo $p(\tau_1, ..., \tau_n)$ dove $p$ è un simbolo di relazione
-di arità $n$ e $\tau_1, ..., \tau_n$ sono termini.
+di arietà $n$ e $\tau_1, ..., \tau_n$ sono termini.
 Vengono chiamati \textit{Letterali} tutti gli atomi e la loro negazione.
 Termini e Letterali sono detti \textit{ground} se non contengono variabili.
 Come già visto per le formule proposizionali, è possibile rappresentare un termine o un letterale
@@ -397,11 +397,11 @@ se è la sostituzione più generale tra tutti gli unificatori dei due termini.
 È possibile generalizzare il concetto di unificazione per insiemi di termini, letterali e insiemi di letterali.
 Dato un insieme di termini $T$, si dice che $T$ è unificabile se esiste una sostituzione $\sigma$ tale che $\tau_1^\sigma = \tau_2^\sigma$
 per ogni coppia di termini $\tau_1, \tau_2 \in T$. In questo caso $\sigma$ è detto unificatore di $T$. 
-Due letterali della stessa arità $L_1 = p_1(\tau_1, ..., \tau_n)$ e $L_2 = p_2(\tau_1', ..., \tau_n')$ 
+Due letterali della stessa arietà $L_1 = p_1(\tau_1, ..., \tau_n)$ e $L_2 = p_2(\tau_1', ..., \tau_n')$ 
 sono unificabili se e solo se esiste una sostituzione che li eguaglia ignorando il simbolo di predicato.
-In altre parole sia $f$ una funzione di arità $n$, allora $L_1$ e $L_2$ sono unificabili se e solo se sono unificabili i termini
+In altre parole sia $f$ una funzione di arietà $n$, allora $L_1$ e $L_2$ sono unificabili se e solo se sono unificabili i termini
 $f(\tau_1, ..., \tau_n)$ e $f(\tau_1', ..., \tau_n')$.
-Letterali di diversa arità non sono mai unificabili.
+Letterali di diversa arietà non sono mai unificabili.
 Un insieme di letterali è unificabile se e solo se esiste una sostituzione che unifica a due a due tutti i letterali dell'insieme.
 % Si dirà anche che un insieme di liste di termini $\{\underline{\tau_1}, ..., \underline{\tau_n}\}$ è unificabile 
 % se e solo se tutte le liste hanno la stessa lunghezza $n$ e dato un qualunque predicato $p$ $n$-ario l'insieme 
@@ -419,7 +419,7 @@ Un importante risultato è questo:
 \begin{proposition}
   Se due termini non sono unificabili allora vale una delle seguenti affermazioni:
   \begin{enumerate}
-    \item I due termini hanno arità diverse
+    \item I due termini hanno arietà diverse
     \item I due termini presentano una function obstruction 
     \item I due termini presentano una variable obstruction
   \end{enumerate}
@@ -648,7 +648,7 @@ cambiare il significato della formula. È quindi possibile normalizzare le claus
 % Da aggiungere il riferimento ai frattali e ai libri e disclamer sul fatto che non è una trattazione esaustiva
 Nei precedenti capitoli si è data la definizione di soddisfacibilità e validità per formule proposizionali e del primo ordine.
 In questa sezione verrà approfondito il discorso e verranno introdotte alcune nozioni fondamentali per 
-capire il funzionamento di un sistema \textit{ATP} (Automatic Theorem Prover), nonché 
+capire il funzionamento di un sistema \textit{ATP} (Automated Theorem Prover), nonché 
 per capire le motivazioni che hanno spinto la creazione di sistemi ATP e i vincoli teorici con cui si devono confrontare.
 Questa non vuole essere una trattazione esaustiva dei teoremi di incompletezza di Gödel o
 della teoria della computazione,
@@ -897,7 +897,7 @@ Una descrizione più dettagliata di Otter verrà data nel capitolo \ref{chap:vam
 \section{Il formato TPTP} \label{sec:tptp_lang}
 In questa sezione verrà descritto il formato TPTP \cite{tptpLan} (Thousands of Problems for Theorem Provers) 
 per la rappresentazione di problemi di logica del primo ordine.
-TPTP è una nota libreria di problemi utilizzata per testare e valutare diversi sistemi ATP (Automatic Theorem Prover).
+TPTP è una nota libreria di problemi utilizzata per testare e valutare diversi sistemi ATP.
 TPTP fornisce diversi formati per la rappresentazione dei problemi,
 in questa sezione ci si soffermerà sui formati \textit{CNF} (Clausal Normal Form) e \textit{FOF} (First Order Formula).
 

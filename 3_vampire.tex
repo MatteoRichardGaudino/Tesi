@@ -67,11 +67,11 @@ I tre componenti sono definiti all'interno di una \textbf{union} per risparmiare
 Essendo definiti all'interno di una union, ogni TermList dovrebbe occupare esattamente 64 bit di memoria.
 In Vampire ogni variabile è rappresentata da un numero intero senza segno mentre i termini complessi
 composti da funzioni sono rappresentati dalla classe Term. 
-Se TermList rappresenta una variabile allora content shiftato di 2 bit verso destra rappresenta l'indice di quella variabile ($content/4$),
+Se TermList rappresenta una variabile allora content spostato di 2 bit verso destra rappresenta l'indice di quella variabile ($content/4$),
 nel caso rappresenti una funzione allora term punta ad un oggetto di tipo Term che contiene l'effettiva struttura della funzione.
 Nella classe Term il nome della funzione è rappresentata da un intero senza segno globalmente univoco definito nella classe \textit{Signature}.
-La classe Signature contiene le informazioni relative all'indice, arità e nome di funzioni e predicati. 
-Term inoltre contiene un Array di TermList di lunghezza pari ad $arity+1$ che rappresenta gli argomenti della funzione listati 
+La classe Signature contiene le informazioni relative all'indice, arietà e nome di funzioni e predicati. 
+Term, inoltre, contiene un Array di TermList di lunghezza pari ad $arity+1$, che rappresenta gli argomenti della funzione ordinati 
 da destra verso sinistra. L'elemento in posizione 0 contiene un Termlist fittizio che contiene le info dello stesso termine.
 \begin{figure}[H]
     \centering
@@ -81,18 +81,19 @@ da destra verso sinistra. L'elemento in posizione 0 contiene un Termlist fittizi
     \caption{Struttura dei termini}
     \label{fig:vampire_terms}
 \end{figure}
-Tutti i termini di default sono rappresentati da una struttura Perfectly Shared (come descritto in \ref{sec:sintassi_fof}) per 
+Tutti i termini abitualmente 
+sono rappresentati da una struttura Perfectly Shared (come descritto in \ref{sec:sintassi_fof}) per 
 risparmiare memoria e velocizzare le operazioni di confronto.
 I letterali sono rappresentati dalla classe \textit{Literal} che è una specializzazione della classe \textit{Term}.
-Nell'implementazione Vampire non fa nessuna distinzione tra nomi di funzione funzioni o predicati essi sono infatti rappresentati
+Nell'implementazione Vampire non fa nessuna distinzione tra nomi di funzioni o predicati. Essi sono, infatti, rappresentati
 entrambi nella Signature come funzioni. 
 Termini e Letterali sono salvati nella Signature in strutture di indicizzazione (SubstitutionTree) per permettere un accesso veloce.
 Un accenno a queste strutture verrà fatto nella sezione \ref{sec:vampire_unification}.
 Literal contiene inoltre funzioni specifiche per la manipolazione dei letterali, come \textit{complementaryLiteral} 
-che restituisce lo stesso letterale negato (dalla struttura di indicizzazione se presente altrimenti ne crea uno nuovo).
+che restituisce lo stesso letterale negato (dalla struttura di indicizzazione, se presente, altrimenti ne crea uno nuovo).
 Le funzioni Term::create e Literal::create sono le funzioni utilizzate per creare nuovi termini e letterali e inserirli nella struttura di indicizzazione.
 
-Ad esempio, il predicato $\lnot p_1(f_2,f_3(x_5), x_5, f_3(x_5))$ viene rappresentato in memoria con una struttura del genere:
+Ad esempio, il predicato $\lnot p_1(f_2,f_3(x_5), x_5, f_3(x_5))$ viene rappresentato in memoria con una struttura della forma riportata in figura \ref{fig:vampire_term_example}.
 
 \begin{figure}[H]
     \centering
@@ -110,13 +111,13 @@ Ad esempio, il predicato $\lnot p_1(f_2,f_3(x_5), x_5, f_3(x_5))$ viene rapprese
 Vampire prende in input formule del tipo $A_1 \land A_2 \land ... \land A_n \land \lnot C$,
 dove $A_1, A_2, ..., A_n$ sono assiomi e $C$ è la congettura,
 e cerca di dimostrarne l'insoddisfacibilità.
-Per fare ciò il problema principale viene scomposto in una lista di elementi chiamati \textit{Unità}.
+Per fare ciò, il problema principale viene scomposto in una lista di elementi chiamati \textit{Unità}.
 Un unità è una formula o una clausola affiancata da una regola di inferenza che lo ha generata.
-In sostanza vi sono due tipi di inferenze, quelle che rappresentano unità date in input
+In sostanza, vi sono due tipi di inferenze: quelle che rappresentano unità date in input
 come \textit{Axiom} per indicare che l'unità è un assioma in input o
-\textit{Negated Conjecture} per indicare che l'unità è la negazione della congetture
+\textit{Negated Conjecture} per indicare che l'unità è la negazione della congetture;
 e quelle che rappresentano altre formule/clausole generate all'interno del processo dimostrativo.
-Le inferenze di questo tipo includono anche una reference alle formule che hanno generato la nuova unità,
+Le inferenze di quest'ultimo tipo includono anche una reference alle formule che hanno generato la nuova unità,
 rendendo quindi possibile risalire alla dimostrazione al termine dell'esecuzione.
 
 
@@ -130,17 +131,17 @@ rendendo quindi possibile risalire alla dimostrazione al termine dell'esecuzione
 \end{figure}
 
 
-Le unità come mostrato in figura \ref{fig:vampire_units} sono rappresentate dalla classe astratta \textit{Unit},
-che si specializza nelle classi \textit{FormulaUnit} che contiene un puntatore ad un oggetto di tipo \textit{Formula}
-e \textit{Clause} che verrà trattata in seguito.
+Le unità, come mostrato in figura \ref{fig:vampire_units}, sono rappresentate dalla classe astratta \textit{Unit},
+che si specializza nelle classi \textit{FormulaUnit}, la quale contiene un puntatore ad un oggetto di tipo \textit{Formula},
+e \textit{Clause}, che verrà trattata in seguito.
 Le formule sono rappresentate da una struttura ad albero esattamente come quelle vista in \ref{sec:sintassi_bool} e \ref{sec:sintassi_fof}.
-La classe \textit{Formula} \ref{fig:vampire_formulas} è una classe astratta che si specializza nelle classi:
+La classe \textit{Formula}, riportata in figura \ref{fig:vampire_formulas}, è una classe astratta che si specializza nelle classi:
 \begin{itemize}
-    \item \textit{AtomicFormula} che rappresenta una formula composta da un solo letterale.
-    \item \textit{BinaryFormula} rappresenta le formule binarie $A \rightarrow B$, $A \leftrightarrow B$ e $A \oplus B$.
-    \item \textit{NegatedFormula} rappresenta le formule negate del tipo $\lnot A$.
-    \item \textit{QuantifiedFormula} rappresenta le formule quantificate del tipo $\forall/\exists x1, x2, ..., xn : A$.
-    \item \textit{JunctionFormula} rappresenta le formule composte dalla concatenazione di $\land$ e $\lor$.
+    \item \textit{AtomicFormula}, che rappresenta una formula composta da un solo letterale.
+    \item \textit{BinaryFormula}, che rappresenta le formule binarie $A \rightarrow B$, $A \leftrightarrow B$ e $A \oplus B$.
+    \item \textit{NegatedFormula}, che rappresenta le formule negate del tipo $\lnot A$.
+    \item \textit{QuantifiedFormula}, che rappresenta le formule quantificate del tipo $\forall/\exists x1, x2, ..., xn : A$.
+    \item \textit{JunctionFormula}, che rappresenta le formule composte dalla concatenazione di $\land$ e $\lor$.
 \end{itemize}
 
 \begin{figure}[H]
@@ -152,8 +153,8 @@ La classe \textit{Formula} \ref{fig:vampire_formulas} è una classe astratta che
     \label{fig:vampire_formulas}
 \end{figure}
 
-Le clausole sono rappresentate dalla classe \textit{Clause} \ref{fig:vampire_clauses} che è una specializza della classe \textit{Unit}.
-Ogni clausola contiene un Array di letterali e sono quindi rappresentate in maniera molto simile alla notazione insiemistica 
+Le clausole sono rappresentate dalla classe \textit{Clause}, riportata in figura \ref{fig:vampire_clauses}, che è una specializzazione della classe \textit{Unit}.
+Ogni clausola contiene un Array di letterali ed è, quindi, rappresentata in maniera molto simile alla notazione insiemistica 
 vista in \ref{sec:forme_normali}.
 
 \begin{figure}[H]
@@ -168,8 +169,8 @@ vista in \ref{sec:forme_normali}.
 
 
 \section{Preprocessing} \label{sec:vampire_preprocessing}
-Vampire è in grado di elaborare formule del primo ordine in qualsiasi forma, 
-tuttavia, poiché il suo algoritmo di saturazione opera esclusivamente su clausole,
+Vampire è in grado di elaborare formule del primo ordine in qualsiasi forma. 
+Tuttavia, poiché il suo algoritmo di saturazione opera esclusivamente su clausole,
 è necessario eseguire delle operazioni di trasformazioni sull'input.
 L'insieme di queste operazioni è chiamato \textit{Preprocessing}.
 Il preprocessing non ha solo lo scopo di convertire la formula in input in una 
@@ -200,7 +201,7 @@ Di seguito sono riportate le principali operazioni di preprocessing eseguite da 
     Elimina i quantificatori esistenziali come visto in \ref{sec:forme_normali_fof} con l'unica 
     differenza che si evita di convertire la formula in PNF.
     \item \textbf{\textit{Clausification}}:
-    Clausifica la formula in modo simile a come accennato in \ref{sec:forme_normali_fof}.
+    Trasforma la formula in forma clausale, in modo simile a come accennato in \ref{sec:forme_normali_fof}.
 \end{enumerate}
 
 
@@ -209,16 +210,16 @@ Di seguito sono riportate le principali operazioni di preprocessing eseguite da 
 Vampire fa parte di una famiglia di ATP basati su saturazione che implementa la \textit{Given Clause Architecture} (\textit{GCA}).
 Data una formula in formato CNF la GCA prevede due insiemi di clausole dette \textit{Attive} e \textit{Passive}.
 Inizialmente l'insieme delle clausole attive è vuoto e l'insieme delle clausole passive contiene tutte le clausole della formula.
-Dopo questo setup iniziale comincia quello che viene chiamato \textit{Main Loop}.
+Dopo questa fase di inizializzazione, comincia quello che viene chiamato \textit{Main Loop}.
 Il Main Loop è un ciclo che termina quando l'insieme delle clausole passive è vuoto o quando viene trovata una clausola vuota.
 Ad ogni iterazione il Main Loop seleziona una clausola dall'insieme delle clausole passive. 
 Questa clausola viene chiamata \textit{Given Clause} (\textit{GC}). 
-Lo step successivo consiste nell'applicare tutte le inferenze possibili tra la GC e le clausole attive.
-Le nuove clausole generate vengono aggiunte all'insieme delle clausole passive mentre la GC viene spostata nell'insieme delle clausole attive.
-Se una delle nuove clausole generate è la clausola vuota allora il Main Loop termina e la formula è insoddisfacibile.
-Se invece l'insieme delle clausole passive viene totalmente svuotato allora il sistema è Saturo e la formula è soddisfacibile.
-Nel caso la formula non sia insoddisfacibile l'insieme delle clausole passive potrebbe non svuotarsi mai,
-in questo caso Il Main Loop termina quando sono terminate le risorse disponibili.
+Il passo successivo consiste nell'applicare tutte le inferenze possibili tra la GC e le clausole attive.
+Le nuove clausole generate vengono aggiunte all'insieme delle clausole passive, mentre la GC viene spostata nell'insieme delle clausole attive.
+Se una delle nuove clausole generate è la clausola vuota, allora il Main Loop termina e la formula è insoddisfacibile.
+Se invece l'insieme delle clausole passive viene totalmente svuotato, allora il sistema è Saturo e la formula è soddisfacibile.
+Nel caso la formula non sia insoddisfacibile, l'insieme delle clausole passive potrebbe non svuotarsi mai.
+In questo caso Il Main Loop termina quando sono terminate le risorse disponibili.
 
 \begin{algorithm}[H]
     \caption{Architettura Given Clause}
@@ -245,19 +246,19 @@ in questo caso Il Main Loop termina quando sono terminate le risorse disponibili
 \end{algorithm}
 
 
-Come già accennato in \ref{sec:resolution} Otter è stato uno dei primi ATP basati su saturazione e su GCA.
-In particolare Otter aggiunge a GCA due nuovi step chiamati di semplificazione.
-Il sistema di inferenze viene diviso in due classi, le inferenze generative e di semplificazione.
+Come già accennato nel Capitolo \ref{sec:resolution}, Otter è stato uno dei primi ATP basati su saturazione e su GCA.
+In particolare, Otter aggiunge a GCA due nuovi passi chiamati di semplificazione.
+Il sistema di inferenze viene diviso in due classi: le inferenze generative e quelle di semplificazione.
 Le inferenze generative prendono una o più clausole e generano nuove clausole.
 Le inferenze di semplificazione prendono una o più clausole e inferiscono 
 una nuova clausola, generalmente più corta, che rende le premesse ridondanti in modo da poterle sostituire
 con la clausola generata. 
-Nel primo step di semplificazone chiamato \textit{Forward semplification} dopo aver selezionato una 
+Nel primo passo di semplificazone, chiamato \textit{Forward semplification}, dopo aver selezionato una 
 clausola dall'insieme delle clausole passive, si tenta di applicare le inferenze di semplificazione
-alla clausola selezionata. Il secondo step di semplificazione chiamato \textit{Backward semplification}
-consiste nell'applicare le inferenza di semplificazione alle clausole attive e passive.
+alla clausola selezionata. Il secondo passo di semplificazione, chiamato \textit{Backward semplification},
+consiste nell'applicare le inferenze di semplificazione alle clausole attive e passive.
 Gli algoritmi che implementano questa struttura vengono detti \textit{Otter} o che
-implementano la \textit{Otter's Architecture}. Un esempio di Otter's Architecture è mostrato in \ref{alg:otter_architecture}.
+implementano l'\textit{architettura Otter}. Un esempio di architettura Otter è mostrato nell'Algoritmo \ref{alg:otter_architecture}.
 
 \begin{algorithm}[H]
     \caption{Architettura Otter} \label{alg:otter_architecture}
@@ -295,10 +296,10 @@ implementano la \textit{Otter's Architecture}. Un esempio di Otter's Architectur
 
 Con la funzione \textit{retained} si intende una funzione che restituisce \textit{true} se la clausola 
 è utile per la dimostrazione e \textit{false} altrimenti. 
-Ad esempio se la clausola è una tautologia viene scartata.
+Ad esempio, se la clausola è una tautologia viene scartata.
 Questa fase è detta \textit{Retention Test}.
-Vampire implementa tre algoritmi di saturazione, \textit{Otter}, \textit{LRS} \textit{Discount}.
-Otter è una versione leggermente modificata della Otter's Architecture. Al posto di avere solo due insiemi di clausole attive e passive,
+Vampire implementa tre algoritmi di saturazione: \textit{Otter}, \textit{LRS} \textit{Discount}.
+Otter è una versione leggermente modificata dell'architettura Otter che, invece di avere solo due insiemi di clausole attive e passive,
 ha un terzo insieme chiamato \textit{unprocessed}. 
 % All'inizio dell'esecuzione tutte le clausole vengono inserite nell'insieme unprocessed.
 % Il Main Loop continua finchè l'insieme unprocessed non è vuoto.
@@ -310,10 +311,10 @@ e il tempo/memoria restanti.
 In particolare quando si effettua il retention test LSR valuta se la clausola è troppo grande da processare in base al tempo e alla memoria rimanente.
 Se la clausola è troppo grande viene scartata anche a costo della perdita di completezza.
 Nel caso specifico in cui la formula è soddisfacibile e LSR scarta una clausola, l'algoritmo termina con un errore.
-Nel caso in cui la formula è insoddisfacibile LSR in alcuni casi performa meglio quando si restringono i limiti di tempo e memoria.
-L'algoritmo Discount è simile ad Otter solo che gli step di semplificazione vengono eseguiti solo sull'insieme delle clausole attive.
+Nel caso in cui la formula è insoddisfacibile, LSR in alcuni casi ottiene prestazioni migliori quando si restringono i limiti di tempo e memoria.
+L'algoritmo Discount è simile a Otter solo che i passi di semplificazione vengono eseguiti solo sull'insieme delle clausole attive.
 Questo è dovuto al fatto che l'insieme delle clausole passive è significativamente più ampio rispetto a quello delle clausole attive. 
-Le clausole attive sono spesso solo l'1\% di quelle passive, il che comporta tempi prolungati durante gli step di semplificazione 
+Le clausole attive sono spesso solo l'1\% di quelle passive, il che comporta tempi prolungati durante i passi di semplificazione, 
 poiché è necessario dedicare molto tempo alla semplificazione delle clausole passive.
 
 Vampire implementa un vasto sistema di inferenze ma il sottoinsieme minimo necessario per la completezza (per la soddisfacibilità di formule senza uguaglianza) è composto 
@@ -326,32 +327,32 @@ dalle inferenze di \textit{Resolution} e \textit{Factoring}.
     $$ \frac{\{L(\tau_1, ..., \tau_n)\} \cup C \cup \{L(\omega_1, ..., \omega_n)\}}{(\{L(\tau_1, ..., \tau_n)\} \cup C)^\sigma} $$
 \end{itemize}
 
-Con $L$ un letterale, $C_1, C_2$ clausole, $\tau_1, ..., \tau_n, \omega_1, ..., \omega_n$ termini e $\sigma$ un unificatore.
+Dove $L$ è un letterale, $C_1, C_2$ sono clausole, $\tau_1, ..., \tau_n, \omega_1, ..., \omega_n$ sono termini e $\sigma$ è un unificatore.
 
 \section{Unificazione e Substitution Trees} \label{sec:vampire_unification}
-Come visto nella sezione precedente l'unificazione è un passo fondamentale per l'applicazione delle regole di inferenza di 
-\textit{Resolution} e \textit{Factoring}. La GCA inoltre prevede che dopo aver selezionato la GC 
+Come visto nella sezione precedente, l'unificazione è un passo fondamentale per l'applicazione delle regole di inferenza di 
+\textit{Resolution} e \textit{Factoring}. La GCA inoltre prevede che, dopo aver selezionato la GC, 
 si applichino tutte le possibili inferenze tra la GC e le clausole attive. 
-Senza un'apposita struttura di indicizzazione la ricerca delle inferenze applicabili sarebbe spaventosamente lento.
-Si pensi di voler verificare se è applicabile la regola di resolution tra due clausole $C_1$ e $C_2$.
-Un algoritmo naive potrebbe essere ad esempio quello di scorrere tutti i letterali di $C_1$ e $C_2$ e verificare se 
+Senza un'apposita struttura di indicizzazione la ricerca delle inferenze applicabili sarebbe spaventosamente lenta.
+Si pensi, per esempio, di voler verificare se è applicabile la regola di resolution tra due clausole $C_1$ e $C_2$.
+Un algoritmo "naif" potrebbe scorrere tutti i letterali di $C_1$ e $C_2$ e verificare se 
 la polarità di un letterale è opposta a quella di un altro letterale e se sono unificabili. 
-Questo algoritmo avrebbe un costo nel caso peggiore di $\mid C_1 \mid \cdot \mid C_2 \mid$ per il costo di $unifiable$.
-È chiaro che una strategia del genere non è sostenibile soprattutto se l'obbiettivo è quello di essere il più rapidi possibile.
+Questo algoritmo avrebbe un costo, nel caso peggiore, di $\mid C_1 \mid \cdot \mid C_2 \mid$ per il costo di \textit{unifiable}.
+È chiaro che una strategia del genere non è sostenibile, soprattutto se l'obbiettivo è quello di essere il più rapidi possibile.
 Vampire utilizza una struttura di indicizzazione chiamata \textit{Substitution Tree} (ST) per velocizzare le operazioni di unificazione.
 Un SubstitutionTree è una struttura ad albero in cui ogni nodo rappresenta una sostituzione.
-Si aggiunge oltre all'insieme standard di variabili $\Sigma_x$ un altro insieme di variabili $\Sigma_x^* = \{*_1, *_2, ...\}$, dette speciali, che servono per la costruzione delle sostituzioni.
+Si aggiunge, oltre all'insieme standard di variabili $\Sigma_x$, un altro insieme di variabili $\Sigma_x^* = \{*_1, *_2, ...\}$, dette speciali, che servono per la costruzione delle sostituzioni.
 I termini speciali sono termini che possono contenere anche variabili speciali oltre a quelle standard.
 
-Per sostituzione in un ST si intende una corrispondenza da variabili speciali a termini speciali e vengono scritte in notazione:
+Per sostituzione in un ST si intende una corrispondenza tra variabili speciali a termini speciali e viene scritta in notazione:
 $\{*_i = \tau$, $*_j = \tau', ... \}$. 
-Per $im(\sigma)$ si indica l'insieme dei termini speciali che compaiono a destra del simbolo dell'uguaglianza in $\sigma$.
-Per $dom(\sigma)$ si indica l'insieme delle variabili speciali che compaiono a sinistra del simbolo dell'uguaglianza in $\sigma$.
+Per $im(\sigma)$ si indica l'immagine di $\sigma$, cioè l'insieme dei termini speciali che compaiono a destra del simbolo dell'uguaglianza in $\sigma$.
+Per $dom(\sigma)$ si indica il dominio di $\sigma$, cioè delle variabili speciali che compaiono a sinistra del simbolo dell'uguaglianza in $\sigma$.
 Per composizione di sostituzioni $\sigma_1 \circ \sigma_2$ si intende la sostituzione che si ottiene applicando $\sigma_2$ 
-ai termini di $\sigma_1$. Ad esempio se $\sigma_1 = \{*_0 = f(*_1, *_2)\}$ e $\sigma_2 = \{*_1 = a, *_2 = g(*_3)\}$ allora
+ai termini nell'immagine di $\sigma_1$. Ad esempio se $\sigma_1 = \{*_0 = f(*_1, *_2)\}$ e $\sigma_2 = \{*_1 = a, *_2 = g(*_3)\}$ allora
 $(\sigma_1 \circ \sigma_2) = \{*_0 = f(a, g(*_3))\}$.
 
-Un nodo di un ST è rappresentato da una coppia $(\sigma, T)$ dove $\sigma$ è una sostituzione e $T$ è un insieme di ST.
+Un nodo di un ST è rappresentato da una coppia $(\sigma, T)$, dove $\sigma$ è una sostituzione e $T$ è un insieme di ST.
 Vi sono tre tipi di nodi:
 
 \begin{itemize}
@@ -367,10 +368,10 @@ Ogni ST rispetta i seguenti vincoli:
 
 \begin{enumerate}
     \item Per ogni percorso $(\sigma_1, T_1), ... , (\sigma_n, T_n)$
-     dalla radice ad una foglia, l'immagine della composizione delle sostituzioni non contiene variabili speciali (è un termine standard):
+     dalla radice a una foglia, l'immagine della composizione delle sostituzioni non contiene variabili speciali (è un termine standard):
      cioè vi sono solo termini standard in $im(\sigma_1 \circ ... \circ \sigma_n)$.
     \item Per ogni percorso $(\sigma_1, T_1), ... , (\sigma_n, T_n)$
-    dalla radice ad una foglia, ogni variabile speciale è associata al massimo una volta per percorso:
+    dalla radice ad una foglia, ogni variabile speciale è sostituita al massimo una volta nelle sostituzioni del percorso:
     cioè per ogni $i \neq j$, $dom(\sigma_i) \cap dom(\sigma_j) = \emptyset$.
 \end{enumerate}
 
@@ -378,13 +379,13 @@ In Vampire è implementata una variante di ST chiamati \textit{Downward Linear S
 le operazioni di inserimento e ricerca. Una trattazione più approfondita può essere trovata in \cite{vampireUnification}.
 Un ST accetta termini e letterali. Il processo di inserimento costruisce un percorso di sostituzioni all'interno dell'albero
 in modo tale che applicando tutte le sostituzioni del percorso alla variabile $*_0$ si ottiene il termine inserito inizialmente.
-Prima dell'inserimento le variabili dei termini vengono normalizzate
+Prima dell'inserimento, le variabili dei termini vengono normalizzate,
 in modo da avere gli indici più bassi possibili. I termini originali vengono poi salvati nelle LeafData per essere recuperati.
-Per la normalizzazione delle variabili vengono utilizzati i \textit{Variable Banks}, che sono essenzialmente un secondo indice delle variabili,
- che servono a tenere sempre disgiunte le variabili dei termini "query" (i termini passati come argomento in una funzione di ricerca)
+Per la normalizzazione delle variabili vengono utilizzati i \textit{Variable Banks}, che sono essenzialmente un secondo indice delle variabili.
+Essi servono a tenere sempre disgiunte le variabili dei termini "query" (i termini passati come argomento in una funzione di ricerca)
 da quelle dei termini nel ST. 
 Questo perchè di solito si vuole unificare due letterali di clausole diverse e quindi con variabili disgiunte.
-Ad esempio se si vuole inserire il termine $f(x, y)$ viene salvato nel ST come
+Ad esempio, se si vuole inserire il termine $f(x, y)$, esso viene salvato nel ST come
 $f(x_{1/1}, x_{2/1})$ dove $/1$ indica il Variable Bank 1.
 
 
@@ -393,8 +394,8 @@ Ad esempio la classe \textit{LiteralSubstitutionTree} viene utilizzata per salva
 Nei LeafData vengono salvati il letterale e la clausola a cui appartiene.
 La funzione $getUnifications(Literal*\; query, bool\; complementary, bool\; retrieveSubstitutions)$ 
 restituisce un iteratore di 
-letterali che unificano con il letterale query. Se complementary è true allora cerca solo i letterali con polarità opposta.
-Se retrieveSubstitutions è true allora restituisce anche la sostituzione.
+letterali che unificano con il letterale query. Se complementary è true, allora cerca solo i letterali con polarità opposta.
+Se retrieveSubstitutions è true, allora restituisce anche la sostituzione.
 Tornando all'esempio dell'inizio della sezione, per trovare le clausole su cui si può applicare la regola di resolution
 con la GC un algoritmo più semplice e molto più efficiente rispetto a quello proposto inizialmente
 consiste nell'inserire tutte le clausole attive nel ST e
@@ -414,36 +415,36 @@ $newClauses := \emptyset$\;\\
 
 \textit{LiteralSubstitutionTree} crea un'associazione da simboli di predicato a ST in modo tale che ogni letterale 
 con lo stesso predicato venga inserito nello stesso ST. 
-Per inserire letterali con simboli di predicato diversi si può utilizzare la classe \textit{SubstitutionTree} a patto 
-che i predicarti abbiano stessa arità. Con la classe \textit{SubstitutionTree::UnificationsIterator} e 
-la funzione \textit{SubstitutionTree::iterator} è possibile ottenere gli stessi risultati dell'esempio precedente:
+Per inserire letterali con simboli di predicato diversi si può utilizzare la classe \textit{SubstitutionTree}, a patto 
+che i predicarti abbiano stessa arietà. Con la classe \textit{SubstitutionTree::UnificationsIterator} e 
+la funzione \textit{SubstitutionTree::iterator} è possibile ottenere gli stessi risultati dell'esempio precedente.
 
 
 \section{Il SAT-Solver} \label{sec:vampire_sat}
 Vampire non implementa un SAT-Solver ma ha un vasto sistema di interfacce per utilizzare al meglio SAT-Solver esterni.
 Al momento gli unici SAT-Solver supportati sono MiniSat e Z3, anche se l'inclusione di Z3 è ancora in fase sperimentale.
-Per utilizzare un SAT-Solver è necessario creare Clausole e letterali appositi per la rappresentazione delle costanti proposizionali.
+Per utilizzare un SAT-Solver è necessario creare clausole e letterali appositi per la rappresentazione delle costanti proposizionali.
 Nella figura \ref{fig:vampire_sat_solver} è mostrata la struttura delle classi e delle interfacce per il SAT-Solver.
 La classe \textit{SATLiteral} rappresenta un letterale proposizionale ed è costituita da una coppia intero-booleano che rappresenta
 l'indice del letterale e la sua polarità. 
 La classe \textit{SATClause} come la classe \textit{Clause} è costituita da un Array, in questo caso di \textit{SATLiteral}.
 La classe \textit{Sat2FO} è uno dei componenti Built-in di Vampire che si occupa di convertire letterali e clausole 
 del primo ordine (FO) in oggetti di tipo \textit{SATLiteral} e \textit{SATClause} (SAT) e viceversa. 
-La chiamata della funzione \textit{Sat2FO::toSat(Literal*)} aggiunge ad una hashMap bidirezionale il puntatore al letterale
-e lo associa ad un nuovo numero unsigned $\geq 1$ se non è già presente altrimenti restituisce il numero già associato.
-La funzione \textit{Sat2FO::toFO(SATLiteral*)} restituisce il puntatore al letterale associato al numero passato come argomento
-se presente altrimenti \textit{nullptr}.
+La chiamata della funzione \textit{Sat2FO::toSat(Literal*)} aggiunge a una hashMap bidirezionale il puntatore al letterale
+e lo associa ad un nuovo numero unsigned $\geq 1$, se non è già presente, altrimenti restituisce il numero già associato.
+La funzione \textit{Sat2FO::toFO(SATLiteral*)} restituisce il puntatore al letterale associato al numero passato come argomento,
+se presente, altrimenti \textit{nullptr}.
 
 La classe astratta \textit{SATSolver} rappresenta un generico SAT-Solver e contiene le funzioni virtuali comuni a tutti i SAT-Solver 
 come \textit{addClause(SATClause*)}, \textit{solve} e \textit{trueInAssignment(SATLiteral)} per 
 aggiungere clausole, risolvere il problema e ottenere l'assegnamento delle variabili proposizionali (se soddisfacibile). 
-Ogni variabile prima di essere utilizzata ha bisogno di essere 'registrata' tramite la funzione \textit{newVar} che restituisce
-l'indice incrementale della nuova variabile registrata. Un altro metodo è quello di utilizzare la funzione \textit{ensureVarCount(count)} che 
+Ogni variabile, prima di essere utilizzata, ha bisogno di essere 'registrata' tramite la funzione \textit{newVar}, che restituisce
+l'indice incrementale della nuova variabile registrata. Un altro metodo è quello di utilizzare la funzione \textit{ensureVarCount(count)}, che 
 assicura che il numero di variabili registrate sia almeno pari a count.
-Se si è utilizzata la classe \textit{Sat2FO} è possibile utilizzare la combinazione \textit{SATSolver::ensureVarCount(Sat2FO::maxSATVar())}
+Se si è utilizzata la classe \textit{Sat2FO}, è possibile utilizzare la combinazione \textit{SATSolver::ensureVarCount(Sat2FO::maxSATVar())}
 per assicurarsi che il numero di variabili registrate sia almeno pari al numero di costanti proposizionali utilizzate.
 
-\textit{SATSolverWithAssumption} estende \textit{SATSolver} e permettere di aggiungere delle assunzioni (Dei letterali che devono essere veri nella soluzione).
+\textit{SATSolverWithAssumption} estende \textit{SATSolver} e permettere di aggiungere delle assunzioni (dei letterali che devono essere valutati a vero nella soluzione).
 \textit{PrimitiveProofRecordingSATSolver} estende \textit{SATSolverWithAssumption} e definisce le funzioni per risalire alla dimostrazione di insoddisfacibilità.
 \textit{MinisatInterfacing} è una classe che si occupa di interfacciare Vampire con la classe \textit{Minisat} che contiene
 l'effettivo codice di Minisat.
@@ -457,11 +458,11 @@ l'effettivo codice di Minisat.
     \label{fig:vampire_sat_solver}
 \end{figure}
 
-Ad esempio si pensi di voler determinare la soddisfacibilità della formula CNF FO ground 
+Ad esempio, si pensi di voler determinare la soddisfacibilità della formula CNF FO ground 
 $\varphi := (p_1(f_1) \lor p_2 \lor \lnot p_3) \land (\lnot p_2 \lor \lnot p_3) \land (\lnot p_1(f_1))$.
 In primo luogo le clausole vengono divise in unità e rappresentate come Array di letterali:
 $$unitList := [[p_1(f_1), p_2, \lnot p_3], [\lnot p_2, \lnot p_3], [\lnot p_1(f_1)]]$$
-Applicando la funzione \textit{Sat2FO::toSat(Clause*)} ad ogni clausola si ottiene una lista di SATClausole:
+Applicando la funzione \textit{Sat2FO::toSat(Clause*)} a ogni clausola, si ottiene una lista di SATClausole:
 $$satUnitList := [[1, 2, -3], [-2, -3], [-1]]$$
 A questo punto vanno registrate le variabili nel SAT-solver e aggiunte le clausole:
 
@@ -471,8 +472,8 @@ $satSolver.ensureVarCount(sat2Fo.maxSATVar())$ \\
     $satSolver.addClause(c)$
 }
 
-È possibile quindi chiamare la funzione \textit{solve} del SAT-Solver per ottenere la soddisfacibilità della formula.
-In questo caso la formula è soddisfacibile un possibile assegnamento è $[1{\rightarrow}false, 2{\rightarrow}false, 3{\rightarrow}false]$.
+È possibile, quindi,chiamare la funzione \textit{solve} del SAT-Solver per valutare la soddisfacibilità della formula.
+In questo caso la formula è soddisfacibile e un possibile assegnamento è $[1{\rightarrow}false, 2{\rightarrow}false, 3{\rightarrow}false]$.
 SatSolver non ha una funzione per ottenere l'assegnamento direttamente ma è possibile ottenere l'assegnamento di ogni singola variabile
 tramite la funzione \textit{trueInAssignment(SATLiteral)}.
 
@@ -488,15 +489,15 @@ $\alpha := EmptyMap<Literal*, bool>()$ \\
 
 Per chiedere al SAT-Solver di cercare un altro assegnamento è possibile aggiungere una nuova clausola 
 che rende l'assegnamento trovato incompatibile. Una clausola del genere è detta clausola bloccante (Blocking Clause) o clausola di conflitto (Conflict Clause).
-In questo caso una possibile clausola bloccante è $[1,2,3]$. 
+In questo caso, una possibile clausola bloccante è $[1,2,3]$. 
 Con l'aggiunta di questa clausola la formula diventa insoddisfacibile e il SAT-Solver restituirà \textit{UNSATISFIABLE} alla chiamata di \textit{solve}.
-Un modo per creare una clausola bloccante è quello di utilizzare la funzione Built-in di \textit{Sat2FO::createConflictClause(LiteralStack)}
+Un modo per creare una clausola bloccante è quello di utilizzare la funzione Built-in di \textit{Sat2FO::createConflictClause(LiteralStack)}, 
 che prende in input una lista di letterali e restituisce una SatClausola con i letterali negati.
 
 \section{Misurazione dei Tempi} \label{sec:vampire_time}
-Quando le performance sono un fattore critico è necessario avere un insieme di strumenti per misurare i tempi di esecuzione.
+Quando le performance sono un fattore critico, è necessario avere un insieme di strumenti per misurare i tempi di esecuzione.
 Vampire mette a disposizione vari modi per misurare i tempi ed eseguire statistiche. In questa sezione ne verranno trattati essenzialmente tre.
-Il primo metodo più classico consiste semplicemente nel rilevare due tempi e calcolare la differenza.
+Il primo metodo, più classico, consiste semplicemente nel rilevare due tempi e calcolare la differenza.
 Questo può essere fatto utilizzando la funzione \textit{elapsedMilliseconds} della classe \textit{Timer} 
 che restituisce il tempo in millisecondi trascorso dall'inizio dell'esecuzione del programma. 
 Un timer globale è disponibile nell'oggetto globale \textit{env} della classe \textit{Lib/Environment}.
@@ -508,9 +509,9 @@ $\Delta t := t_2 - t_1$
 
 Il secondo metodo consiste nell'utilizzare la macro \textit{TIME\_TRACE(name)}
 che misura il tempo trascorso tra l'invocazione e la fine del blocco di codice.
-'name' è una stringa che di norma dovrebbe essere definita nella classe \textit{Debug/TimeProfiling} con tipo
+Il parametro \textit{name} è una stringa che di norma dovrebbe essere definita nella classe \textit{Debug/TimeProfiling} con tipo
 \textit{static constexpr const char* const}.
-È possibile chiamare più volte \textit{TIME\_TRACE} (con 'name' diversi) in più blocchi annidati e alla fine dell'esecuzione, con l'opzione \textit{-tstat} attiva,
+È possibile chiamare più volte \textit{TIME\_TRACE} (con parametro diverso) in più blocchi annidati e alla fine dell'esecuzione, con l'opzione \textit{-tstat} attiva,
 Vampire stamperà un report con un albero delle chiamate e i tempi trascorsi, il numero di chiamate e il tempo medio per chiamata.
 Un esempio di report è mostrato in figura \ref{fig:time_trace_report}.
 
@@ -524,9 +525,9 @@ Un esempio di report è mostrato in figura \ref{fig:time_trace_report}.
 \end{figure}
 
 Il terzo metodo non è serve a misurare il tempo di esecuzione ma conta il numero di invocazioni.
-La macro \textit{RSTAT\_CTR\_INC(name)} definita in \textit{Debug/RuntimeStatistics} definisce 
-un contatore associato ad ogni 'name' e lo incrementa di 1 ad ogni invocazione.
-Anche in questo caso Vampire stamperà un report alla fine dell'esecuzione con il formato \textit{'name': 'count'}.
+La macro \textit{RSTAT\_CTR\_INC(name)}, la cui definizione si trova in \textit{Debug/RuntimeStatistics}, definisce 
+un contatore associato ad ogni valore del parametro \textit{name} e lo incrementa di 1 ad ogni invocazione.
+Anche in questo caso, Vampire stamperà un report alla fine dell'esecuzione con il formato \textit{'name': 'count'}.
 Vampire utilizza questa macro ad esempio per contare il numero di clausole create e il numero di clausole eliminate.
 Un esempio di report è mostrato in figura \ref{fig:rstat_report}.
 

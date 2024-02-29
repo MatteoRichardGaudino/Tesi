@@ -5,64 +5,71 @@
 \chapter*{Introduzione}
 \addcontentsline{toc}{chapter}{Introduzione}
 
-% \blindtext[2]
 
-% Il problema della soddisfacibilità, i theorem prover, vampire, 
-% i frammenti della logica del primo ordine, i binding fragments. 
-% Strategie e metodi adottati. 
-
-% Descrizione dei capitoli successivi.
-
-Informatica e logica hanno sempre avuto molto in comune.
-Entrambe nascono in qualche modo per descrivere e/o imitare il cervello e il ragionamento umano. 
-Il sogno di Alan Turing infatti quello di "costruire un cervello" artificiale,
-così come il sogno di molti logici è quello di "formalizzare il ragionamento umano".
-Sebbene attualmente lo studio dell'intelligenza si basa principalmente su metodi di apprendimento 
-piuttosto che su deduzione automatica, la logica rimane comunque un linguaggio estremamente utile
+L'informatica e la logica condividono origini comuni poiché 
+entrambe si sono sviluppate inizialmente con l'obiettivo di descrivere e/o 
+emulare le capacità cognitive umane, tra cui il ragionamento.
+Sebbene attualmente lo studio dell'intelligenza artificiale si basi principalmente su metodi di apprendimento 
+piuttosto che sulla deduzione, la logica rimane comunque uno strumento estremamente utile,
 in grado di descrivere in modo preciso il linguaggio matematico.
-La dimostrazione automatica di teoremi è un'importante branca dell'informatica e della logica
-e trova largo utilizzo nell'ambito della verifica formale di software e hardware 
-e i sistemi ATP (Automated theorem proving) sono utilizzati come strumento di supporto 
-nella ricerca matematica per affinare o verificare dimostrazioni formali.
+La dimostrazione automatica di teoremi è un'importante branca dell'informatica e della logica,
+trovando largo utilizzo nell'ambito della verifica formale di software e hardware.
+I sistemi ATP (Automated Theorem Prover) sono utilizzati come strumento di supporto 
+nella ricerca matematica, per affinare o verificare dimostrazioni formali.
 %
+
 I primi tentativi di realizzare un sistema 
 di dimostrazione automatica risalgono agli anni '50,
-quando i ricercatori Allen Newell, Herbert A. Simon, and Cliff Shaw.
-Progettarono il primo dimostratore automatico il \textit{Logic Theorist}
-che, tramite varie euristiche, tentava di simulare il ragionamento umano. 
+quando i ricercatori Allen Newell, Herbert A. Simon e Cliff Shaw
+progettarono il primo dimostratore automatico: il \textit{Logic Theorist}
+che, tramite varie euristiche, tentava di dimostrare teoremi simulando il ragionamento umano. 
 Da quel momento la ricerca si è spostata su metodi più formali e rigorosi,
-meno human-friendly e più adatti ad essere eseguiti da un calcolatore.
-Gli studi moderni si basano principalmente sugli studi 
-del logico Herbrand e del metodo di Risoluzione di Robinson.
-% 
-Il problema della soddisfacibilità (SAT) è uno dei problemi più studiati in informatica.
-Il problema consiste del determinare se una formula è soddisfacibile o meno ossia 
-se esiste un'interpretazione che la rende vera.
-Il problema è decidibile per la logica proposizionale, ma diventa indecidibile
-per la logica del primo ordine.
-Per questo la ricerca si è spostata sulla ricerca di frammenti sintattici della logica del primo ordine
+meno ispirati ai ragionamenti umani e più adatti ad essere eseguiti da un calcolatore.
+Gli studi moderni si basano principalmente sulla tecnica chiamata \textit{Resolution}.
+% in combinazione con la teoria dell'unificazione.
+%  
+
+Vampire è un moderno ATP, basato su Resolution, creato da Andrei Voronkov e Alexandre Riazanov presso l'Università di Manchester.
+Uno dei suoi punti di forza è l’efficienza. Il team di sviluppo infatti partecipa
+annualmente al CASC (una competizione tra sistemi ATP),
+vincendo in almeno una categoria ogni anno.
+La sua implementazione è open-source ed è sviluppato in C++.
+
+%
+
+Il problema di dimostrare se una formula è un teorema o meno è riconducibile al problema di determinare
+se una formula è soddisfacibile.
+Una formula è soddisfacibile se esiste un'interpretazione che la rende vera.
+Il problema è decidibile per la logica proposizionale, nel senso che esiste un algoritmo
+che, dato in input una formula, restituisce una risposta positiva o negativa,
+ma diventa indecidibile per la logica del primo ordine.
+Per queste ragioni, la ricerca si è concentrata sull'individuazione di frammenti sintattici della logica del primo ordine
 decidibili rispetto al problema della soddisfacibilità.
-Tra questi vi sono i frammenti Binding che sono oggetto di studio di questa tesi.
+Tra questi, vi sono i frammenti Binding che sono oggetto di studio di questa tesi.
+L'algoritmo di decisione per i frammenti Binding non è basato su Resolution,
+ma risolve il problema utilizzando la teoria dell'unificazione, in combinazione 
+ad un algoritmo di decisione per la logica proposizionale.
 % 
-Questa tesi si propone di implementare l'algoritmo di soddisfacibilità per i frammenti Binding
-all'interno del sistema di dimostrazione automatica Vampire.
+
+Questa tesi si propone di implementare l'algoritmo di decisione per i frammenti Binding
+all'interno del sistema di dimostrazione automatica Vampire 
+e di valutarne le prestazioni, in confronto ad un metodo di decisione generale
+basato su Resolution per l'intera logica del primo ordine.
+
 % 
-Vampire è un moderno ATP creato da Andrei Voronkov e Alexandre Riazanov presso l'Università di Manchester.
-Uno dei suoi punti di forza `e l’efficienza, Il team di sviluppo infatti partecipa
-annualmente al CASC (The CADE ATP System Competition), una competizione tra sistemi ATP, e
-fino ad ora ha sempre vinto almeno in una categoria ogni anno.
-La sua implementazione è open-source e sviluppato in C++.
-% 
+
 La tesi è strutturata come segue:
 \begin{itemize}
-    \item Nel capitolo 1 verra data un'introduzione 
-    alla logica proposizionale e del primo ordine, al problema della soddisfacibilità,
+    \item Nel capitolo 1 verrà data un'introduzione 
+    alla logica proposizionale, alla logica del primo ordine, al problema della soddisfacibilità,
     ai teoremi di incompletezza di Gödel e al problema della dimostrazione automatica.
     \item Nel capitolo 2 verranno presentati i frammenti Binding e l'algoritmo di decisione.
-    \item Nel capitolo 3 verranno descritte le componenti principali di Vampire con particolare attenzione
-    a quelli necessari per l'implementazione dell'algoritmo di decisione per i frammenti Binding.
-    \item Nel capitolo 4 verrà descritta l'implementazione dell'algoritmo di decisione per i frammenti Binding
-    \item Nel capitolo 5 verranno presentati i risultati sperimentali ed un confronto con Vampire standard.
+    \item Nel capitolo 3 verranno descritte le componenti principali di Vampire, con particolare attenzione
+    a quelle necessarie per l'implementazione dell'algoritmo di decisione per i frammenti Binding.
+    \item Nel capitolo 4 verrà descritto in che modo le componenti studiate nel capitolo precedente
+    sono state utilizzate per implementare l'algoritmo di decisione.
+    \item Nel capitolo 5 verranno presentati i risultati sperimentali ottenuti dall'esecuzione dell'algoritmo
+    e verrà fatto un confronto con l'algoritmo di decisione generale basato su Resolution.
 \end{itemize}
 
 

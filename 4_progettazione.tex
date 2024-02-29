@@ -52,8 +52,8 @@ L'approccio utilizzato è stato quello di creare una nuova formula ground che ra
 applicare le funzioni standard di preprocessing
 e mantenere una serie di strutture per risalire ai componenti originali.
 Per questo scopo viene introdotto un nuovo insieme di simboli di predicato $\Sigma_b = \{b_1, b_2, ...\}$.
-I predicati di $\Sigma_b$ con arità 0 saranno chiamati \textit{booleanBinding} e saranno associati ad una formula del frammento \ob o \cb.
-I predicati di $\Sigma_b$ con arità $n > 0$ saranno chiamati \textit{literalBindign} e fungeranno da rappresentati dei $\tau$-Binding delle formule \ob.
+I predicati di $\Sigma_b$ con arietà 0 saranno chiamati \textit{booleanBinding} e saranno associati ad una formula del frammento \ob o \cb.
+I predicati di $\Sigma_b$ con arietà $n > 0$ saranno chiamati \textit{literalBindign} e fungeranno da rappresentati dei $\tau$-Binding delle formule \ob.
 Il preprocessing seguirà pressochè questa struttura:
 
 \begin{enumerate}
@@ -300,9 +300,9 @@ La ricerca di tutti i sottoinsiemi unificabili è senza dubbio la parte più com
 L'approccio utilizzato nell'algoritmo \ref{alg:1b} è troppo astratto e non utilizzabile nella pratica.
 Anche il solo problema di iterare su tutti i sottoinsiemi di un insieme è un problema non trivale.
 Vanno quindi necessariamente fatti dei tagli nello spazio di ricerca.
-La prima osservazione che si può fare è che se un insieme di letterali è unificabile allora i letterali hanno tutti la stessa arità.
-È quindi possibile ordinare l'insieme di implicanti in base all'arità e ricercare per ogni 'Gruppo di Arità' tutti i sottoinsiemi unificabili.
-Già in questo modo si riduce notevolmente lo spazio di ricerca eliminando tutti quei sottoinsiemi composti da letterali di arità diversa.
+La prima osservazione che si può fare è che se un insieme di letterali è unificabile allora i letterali hanno tutti la stessa arietà.
+È quindi possibile ordinare l'insieme di implicanti in base all'arietà e ricercare per ogni 'Gruppo di Arietà' tutti i sottoinsiemi unificabili.
+Già in questo modo si riduce notevolmente lo spazio di ricerca eliminando tutti quei sottoinsiemi composti da letterali di arietà diversa.
 La seconda osservazione è che dati due sottoinsiemi $U' \subseteq U$ se la congiunzione della conversione booleana dei letterali di $U$ è 
 soddisfacibile allora lo sarà anche quella di $U'$. 
 Questo riduce ulteriormente lo spazio di ricerca ai soli sottoinsiemi massimali unificabili.
@@ -326,7 +326,7 @@ dell'insieme soluzione.
 In particolare per ogni letterale $x$ se $S[x] = 1$ allora fa parte della soluzione, se $S[x] = 0$ allora non fa parte della soluzione
 e infine se $S[x] = -1$ allora vuol dire che non fa parte della soluzione e deve essere escluso dalle ricerche future.
 Prima di iniziare la ricerca va impostato l'ambiente in modo tale che il SubstitutionTree contenga tutti i letterali 
-del gruppo di arità corrente e S mappi tutti i letterali a 0. 
+del gruppo di arietà corrente e S mappi tutti i letterali a 0. 
 Viene fornita anche una funzione \textit{fun} che prende in input l'insieme soluzione e restituisce un booleano.
 La funzione \ref{alg:mus_call} è la funzione che inizia la catena di chiamate ricorsive. 
 % Prende in input un letterale e itera su (almeno) tutti i mus che contengono il letterale.
@@ -593,9 +593,9 @@ Se il satLetterale è soddisfatto dall'assegnamento allora
 se il letterale originale non è un booleanBinding viene aggiunto all'insieme di implicanti,
 altrimenti vengono aggiunti tutti i literalBinding associati al booleanBinding.
 
-Dopo aver ottenuto l'insieme di implicanti, l'insieme viene ordinato in base all'arità dei letterali.
+Dopo aver ottenuto l'insieme di implicanti, l'insieme viene ordinato in base all'arietà dei letterali.
 La funzione sortImplicants può essere estesa aggiungendo varie euristiche.
-La prima euristica che è stata implementata è quella di spingere i letterali ground all'inizio di ogni gruppo di arità in modo da utilizzare 
+La prima euristica che è stata implementata è quella di spingere i letterali ground all'inizio di ogni gruppo di arietà in modo da utilizzare 
 l'algoritmo \ref{alg:groundMus} per ridurre il numero di chiamate ricorsive che verrebbero fatte dall'algoritmo \ref{alg:mus}.
 La seconda euristica è quella di ordinare i letterali in base ai sottotermini in modo da avere vicino sequenze di letterali
 che hanno stessi termini per sfruttare l'ottimizzazione vista nell'algoritmo \ref{alg:mus}.
@@ -603,7 +603,7 @@ che hanno stessi termini per sfruttare l'ottimizzazione vista nell'algoritmo \re
 Se l'insieme di implicanti contiene solo letterali ground (che non sono literalBindings) allora la formula è soddisfacibile
 perchè l'assegnamento per la formula esterna è valido anche per le formule interne e l'algoritmo termina restituendo $\top$.
 
-Altrimenti per ogni gruppo di arità si imposta l'ambiente per la ricerca dei mus
+Altrimenti per ogni gruppo di arietà si imposta l'ambiente per la ricerca dei mus
 e viene chiamata la funzione mus \ref{alg:mus_call} per ogni letterale del gruppo.
 Se una di queste chiamate restituisce $\bot$ allora la formula FO corrispondente 
 all'assegnamento booleano trovato è insoddisfacibile e si procede con la ricerca di un nuovo assegnamento.
@@ -648,8 +648,8 @@ Il blocco numerato con (1) nell'algoritmo \ref{alg:mus}.
 Inoltre nell'algoritmo \ref{alg:1b_impl} il blocco numerato con (1) era posto 
 fuori dal ciclo while e veniva controllata se tutta la formula fosse ground.
 In tal caso veniva restituito direttamente il valore della funzione solve del SatSolver.
-Il sorting degli implicanti nell'algoritmo naif è effettuato solo in base all'arità dei letterali, mentre nell'algoritmo ottimizzato
-vengono spinti i letterali ground all'inizio di ogni gruppo di arità e vengono ordinati in base ai sottotermini.
+Il sorting degli implicanti nell'algoritmo naif è effettuato solo in base all'arietà dei letterali, mentre nell'algoritmo ottimizzato
+vengono spinti i letterali ground all'inizio di ogni gruppo di arietà e vengono ordinati in base ai sottotermini.
 Come ultima modifica, sempre sull'algoritmo \ref{alg:1b_impl},
 la riga numerata con (2) era precedentemente posta dopo il blocco numerato con (3)
 e veniva usato tutto l'insieme di implicanti per generare la clausola bloccante
