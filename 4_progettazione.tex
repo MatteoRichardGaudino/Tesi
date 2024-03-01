@@ -227,7 +227,6 @@ come riportato nella tabella \ref{tab:bindingToLiteral}.
 
 \begin{table}[H]
     \label{tab:bindingToLiteral}
-    \caption{Esempio di booleanBindingToLiteral e literalToBooleanBindings}
     \centering
     \begin{tabular}{|c|c|}
         \hline
@@ -240,6 +239,7 @@ come riportato nella tabella \ref{tab:bindingToLiteral}.
         & $b_8(sk_1) \rightarrow \lnot b_3$ \\
         \hline
     \end{tabular}
+    \caption{Esempio di booleanBindingToLiteral e literalToBooleanBindings}
 \end{table}
 
 Le formule associate ai literalBindings vengono messe in forma clausale:
@@ -428,7 +428,7 @@ $toFree := \emptyset$\;
 \Return $\top$\;
 \end{algorithm}
 
-La funzione comincia inizializzando la variabile $isMax$ a $\top$ che rappresenta il fatto che il sottoinsieme è massimale.
+La funzione descritta dall'algoritmo \ref{alg:mus} comincia inizializzando la variabile $isMax$ a $\top$ che rappresenta il fatto che il sottoinsieme è massimale.
 Se non vengono effettuate chiamate ricorsive allora $isMax$ non viene modificato
 e viene chiamata la funzione \textit{fun} sull'insieme soluzione.
 Successivamente viene chiesto al SubstitutionTree di restituire un iteratore
@@ -465,7 +465,7 @@ apportato nessun cambiamento,
 allora si evita di effettuare una chiamata ricorsiva su $l$ in quanto è possibile
 utilizzare lo stesso iteratore di $literal$. 
 Se anche $u^\sigma$ è uguale a $u$ allora viene aggiunto alla lista $FtoFree$ passata in input.
-Questo perchè $u$ ha esattamente gli stessi termini di $literal$, quindi tutti i mus che contengono $u$ contengono anche $literal$.
+Questo perché $u$ ha esattamente gli stessi termini di $literal$, quindi tutti i mus che contengono $u$ contengono anche $literal$.
 Il letterale $u$ va, quindi, rimosso/bloccato/sbloccato dalla soluzione esattamente quando viene rimosso/bloccato/sbloccato il letterale
 con cui è stata fatta l'unificazione al livello superiore che ha poi generato $literal$.
 In caso contrario, $u$ viene aggiunto alla lista $toFree$ per essere rimosso alla fine dell'esecuzione del livello corrente.
@@ -484,6 +484,13 @@ Alla fine dell'iterazione sui letterali unificabili, se $isMax$ è $\top$,
 allora si compone la soluzione e viene chiamata la funzione \textit{fun}.
 Se \textit{fun} restituisce $\bot$, allora si restituisce $\bot$.
 Altrimenti si liberano i letterali della lista $toFree$ e si restituisce $\top$.
+
+La lista $toFree$ è quindi la lista di letterali che devono essere sbloccati alla fine dell'esecuzione del livello corrente.
+La lista $tmpToFree$ è una lista temporanea che viene passata in input alla chiamata ricorsiva. 
+Alla fine della chiamata ricorsiva, $tmpToFree$ contiene tutti i letterali che hanno la stessa lista di termini di $literal^\sigma$.
+Questi letterali vengono bloccati e aggiunti a $toFree$ per essere sbloccati alla fine dell'esecuzione del livello corrente.
+La lista $FtoFree$ rappresenta la lista $tmpToFree$ passata in input dal livello superiore.
+% In $FtoFree$ vengono inseriti tutti i letterali che hanno la stessa lista di termini del letterale passato in input per essere gestiti dal livello superiore.
 
 
 \begin{algorithm}[H] \label{alg:groundMus}
@@ -572,6 +579,22 @@ Dato il problema già sottoposto a \textit{preprocessing} l'algoritmo \ref{alg:1
 con le satClausole ottenute nella fase di preprocessing. 
 Se la formula è soddisfacibile, allora si recupera l'insieme degli implicanti
 tramite la funzione getImplicants riportata nell'algoritmo \ref{alg:getImplicants}.
+Dopo aver ottenuto l'insieme di implicanti, l'insieme viene ordinato in base all'arietà dei letterali tramite la funzione sortImplicants.
+La funzione sortImplicants è stata realizzata incorporando varie euristiche.
+La prima euristica che è stata implementata è quella di anticipare i letterali ground all'inizio di ogni gruppo di arietà in modo da utilizzare 
+l'algoritmo \ref{alg:groundMus} per ridurre il numero di chiamate ricorsive che verrebbero fatte dall'algoritmo \ref{alg:mus}.
+La seconda euristica è quella di ordinare i letterali in base ai sottotermini, in modo che sequenze di letterali
+che hanno stessi termini siano vicini tra loro, così da poter sfruttare l'ottimizzazione vista nell'algoritmo \ref{alg:mus}.
+
+Se l'insieme di implicanti contiene solo letterali ground (che non sono literalBindings), allora la formula è soddisfacibile, 
+perché l'assegnamento per la formula esterna è valido anche per le formule interne e l'algoritmo termina restituendo $\top$.
+
+Altrimenti, per ogni gruppo di arietà, si imposta l'ambiente per la ricerca dei mus
+e viene chiamata la funzione mus dell'algoritmo \ref{alg:mus_call} per ogni letterale del gruppo.
+Se una di queste chiamate restituisce $\bot$, allora la formula FO corrispondente 
+all'assegnamento booleano trovato è insoddisfacibile e si procede con la ricerca di un nuovo assegnamento.
+Se tutte le chiamate restituiscono $\top$, allora la formula è soddisfacibile e l'algoritmo termina restituendo $\top$.
+Se non sono disponibili nuovi assegnamenti allora, la formula è insoddisfacibile e l'algoritmo termina restituendo $\bot$.
 
 \begin{algorithm}[H] \label{alg:getImplicants}
     \caption{getImplicants}
@@ -594,28 +617,12 @@ $implicants := \emptyset$\;
 \Return $implicants$\;
 \end{algorithm}
 
-Per ogni letterale del problema 
-viene recuperato il corrispondente satLetterale.
-Se il satLetterale è soddisfatto dall'assegnamento allora 
-se il letterale originale non è un booleanBinding viene aggiunto all'insieme di implicanti,
-altrimenti vengono aggiunti tutti i literalBinding associati al booleanBinding.
-
-Dopo aver ottenuto l'insieme di implicanti, l'insieme viene ordinato in base all'arietà dei letterali tramite la funzione sortImplicants.
-La funzione sortImplicants è stata realizzata incorporando varie euristiche.
-La prima euristica che è stata implementata è quella di anticipare i letterali ground all'inizio di ogni gruppo di arietà in modo da utilizzare 
-l'algoritmo \ref{alg:groundMus} per ridurre il numero di chiamate ricorsive che verrebbero fatte dall'algoritmo \ref{alg:mus}.
-La seconda euristica è quella di ordinare i letterali in base ai sottotermini, in modo che sequenze di letterali
-che hanno stessi termini siano vicini tra loro, così da poter sfruttare l'ottimizzazione vista nell'algoritmo \ref{alg:mus}.
-
-Se l'insieme di implicanti contiene solo letterali ground (che non sono literalBindings), allora la formula è soddisfacibile, 
-perchè l'assegnamento per la formula esterna è valido anche per le formule interne e l'algoritmo termina restituendo $\top$.
-
-Altrimenti, per ogni gruppo di arietà, si imposta l'ambiente per la ricerca dei mus
-e viene chiamata la funzione mus dell'algoritmo \ref{alg:mus_call} per ogni letterale del gruppo.
-Se una di queste chiamate restituisce $\bot$, allora la formula FO corrispondente 
-all'assegnamento booleano trovato è insoddisfacibile e si procede con la ricerca di un nuovo assegnamento.
-Se tutte le chiamate restituiscono $\top$, allora la formula è soddisfacibile e l'algoritmo termina restituendo $\top$.
-Se non sono disponibili nuovi assegnamenti allora, la formula è insoddisfacibile e l'algoritmo termina restituendo $\bot$.
+La funzione getImplicants, rappresentata nell'algoritmo \ref{alg:getImplicants}, viene chiamata per ottenere l'insieme degli implicanti
+dopo aver ottenuto un risultato positivo dal satSolver.
+Per ogni letterale del problema viene recuperato il corrispondente satLetterale.
+Se il satLetterale è soddisfatto dall'assegnamento, allora il letterale corrispondente o è un booleanBinding o è un letterale ground.
+Nel primo caso vengono aggiunti all'insieme di implicanti tutti i literalBindings associati al booleanBinding.
+Nel secondo caso, invece, viene aggiunto direttamente il letterale all'insieme di implicanti.
 
 \begin{algorithm}[H] \label{alg:internalSat}
     \caption{Sat interna}

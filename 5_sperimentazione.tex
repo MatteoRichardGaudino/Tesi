@@ -108,7 +108,7 @@ Binding.
 Come regola di semplificazione è stata disattivata l'opzione \textit{-fs} (Forward Subsumption) che elimina 
 clausole che sono sussunte da altre clausole durante la fase di \textit{Forward simplification} 
 (Una clausola $D$ è sussunta da una clausola $C$ se esiste una sostituzione $\sigma$ tale che 
-$C^\sigma \subseteq D$, clausole del genere vengono cercate dalla $fs$ e rimosse perchè ridondanti).
+$C^\sigma \subseteq D$, clausole del genere vengono cercate dalla $fs$ e rimosse perché ridondanti).
 È stata disattivata anche l'opzione \textit{-av} (AVATAR - Advanced Vampire Architecture
 for Theories and Resolution) che è un metodo SMT implementato in Vampire per lo splitting delle clausole tramite un Sat solver.
 L'opzione \textit{-av} è stata disattivata dato che l'obbiettivo è quello di far utilizzare a Vampire solo calcoli del primo ordine.
@@ -144,7 +144,7 @@ Partendo dai problemi \textit{fof} del frammento \textit{One Binding} è possibi
 relativo alla tabella \ref{tab:fof_1b_time} dei tempi di esecuzione (Vampire in rosso(-sangue) e l'algoritmo naif color foglia di tè). 
 Si nota subito che nonostante la maggior parte dei problemi venga risolta in tempi molto brevi da entrambi, 
 nell'ordine di millisecondi, l'algoritmo naif si comporta molto bene rispetto a Vampire.
-Questo anche perchè molti dei problemi selezionati sono risultatì puramente proposizionali e quindi risolti direttamente dal SAT solver
+Questo anche perché molti dei problemi selezionati sono risultatì puramente proposizionali e quindi risolti direttamente dal SAT solver
 senza passare per l'algoritmo effettivo.
 Nella tabella questi problemi sono contrassegnati con una '(g)' affianco tempo.
 È noto infatti che per problemi proposizionali i SAT solver sono molto più efficienti rispetto ad algoritmi per la logica del primo ordine.
@@ -203,7 +203,7 @@ $b_i$ sono BindingLiterals e $t$ è un termine comune, succede questo:
     \item Viene effettuata la seconda chiamata ricorsiva su $b_2(t)^\sigma$ dove $\sigma$ è l'unificatore
     di $b1$ e $b2$ cioè la sostituzione vuota. Quindi la chiamata ricorsiva viene effettuata su $b_2(t)$.
     \item Viene creato un nuovo iteratore sul SubstitutionTree che restituisce in ordine 
-    $b_1$ e $b_2$ che vengono scartati perchè già presenti nella soluzione.
+    $b_1$ e $b_2$ che vengono scartati perché già presenti nella soluzione.
     In generale ad ogni livello con input $b_x$ vengono scartati $x$ letterali per trovare un nuovo
     letterale da aggiungere alla soluzione.
     \item Il ciclo si ripete finchè non si arriva a $b_n$ e si è trovato il mus.
@@ -364,7 +364,7 @@ con polarità opposta in una Sat clausola per massimizzare la probabilità di tr
 Con questa strategia probabilmente si riuscirebbe a risolvere il problema 136 in tempi più ragionevoli.
 Questa analisi non dovrebbe essere molto diversa da quella fatta da updr.
 Un altro aspetto del preprocessing è che non è escluso che vi siano dei LiteralBinding ground.
-Questo accade perchè i booleanBinding vengono creati prima della skolemizzazione mentre i LiteralBinding vengono creati dopo.
+Questo accade perché i booleanBinding vengono creati prima della skolemizzazione mentre i LiteralBinding vengono creati dopo.
 Si potrebbe aggiungere un'opzione per scomporre i LiteralBinding ground una volta skolemizzati 
 o comunque aggiungere un controllo del tipo che se la sotto formula ha un prefisso esistenziale con polarità positiva (o universale con polarità negativa) allora non crea il booleanBinding.
 Seguendo questa strada però bisognerebbe aggiungere uno step in più per skolemizzare la FBE e 
