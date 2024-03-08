@@ -334,7 +334,7 @@ infine, se $S[x] = -1$, allora vuol dire che non fa parte della soluzione e deve
 Prima di iniziare la ricerca, va impostato l'ambiente in modo tale che il SubstitutionTree contenga tutti i letterali 
 del gruppo di arietà corrente e S associ tutti i letterali a 0. 
 Viene fornita anche una funzione \textit{fun}, che prende in input l'insieme soluzione e restituisce un booleano.
-La funzione calcolata dall'algoritmo \ref{alg:mus_call} è la funzione principale. 
+La funzione calcolata dall'algoritmo \ref{alg:mus_call} è la funzione principale che inizia la catena di chiamate ricorsive. 
 % Prende in input un letterale e itera su (almeno) tutti i mus che contengono il letterale.
 
 
@@ -525,8 +525,23 @@ Ciò significa che l'unico mus di $g$ è proprio l'insieme di tutti i letterali 
 Il costo di questo algoritmo è pari al costo della visita nel SubstitutionTree che viene effettuata tramite la funzione \textit{getUnifications}
 e l'iteratore $uit$,
 più il costo della chiamata della funzione \textit{fun}.
-In linea di massima molto più conveniente rispetto alla funzione \ref{alg:mus} che può effettuare potenzialmente un numero esponenziale 
-di chiamate ricorsive. 
+In termini di quante volte viene visitato interamente il SubstitutionTree, l'algoritmo \ref{alg:groundMus} visita l'albero
+esattamente una sola volta, mentre l'algoritmo \ref{alg:mus} potrebbe visitare l'albero per intero ad ogni chiamata ricorsiva.
+Il numero di chiamate ricorsive effettuabili dall'algoritmo \ref{alg:mus} è limitato superiormente dall'equazione di ricorrenza riportata di seguito.
+$$
+T(n) = 
+\begin{cases}
+    1 & \text{se } n = 1\\
+    \sum\limits_{i=1}^{n-1} T(n-i) & \text{altrimenti}
+\end{cases}
+$$
+Dove $n$ è il numero di letterali nel gruppo di arietà.
+Si può notare che il secondo caso si può riscrivere come: $T(n) = \sum\limits_{i=1}^{n-1} T(i)$. Si nota inoltre che
+$T(n) = \sum\limits_{i=1}^{n-2} T(i) + T(n-1)$ e $T(n-1) = \sum\limits_{i=1}^{n-2} T(i)$ quindi $T(n) = 2T(n-1)$.
+Applicando il metodo iterativo si ottiene che $T(n) = O(2^n)$.
+In conclusione, l'algoritmo \ref{alg:mus} potrebbe visitare il SubstitutionTree un numero di volte esponenziale, 
+mentre l'algoritmo \ref{alg:groundMus} lo visita esattamente una sola volta.
+
 
 
 \subsubsection{Procedura di decisione}
