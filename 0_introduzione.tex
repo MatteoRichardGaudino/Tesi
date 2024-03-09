@@ -49,12 +49,34 @@ Tra questi, vi sono i frammenti Binding che sono oggetto di studio di questa tes
 L'algoritmo di decisione per i frammenti Binding non è basato su Resolution,
 ma risolve il problema utilizzando la teoria dell'unificazione, in combinazione 
 ad un algoritmo di decisione per la logica proposizionale.
+
+Le formule dei frammenti Binding sono, essenzialmente, combinazioni booleane di formule in Prenex Normal Form (PNF).
+La struttura della matrice delle formule PNF ne stabilisce il sotto frammento Binding di appartenenza.
+Il sotto frammento meno espressivo è chiamato \textit{One Binding}.
+Le formule di questo sotto frammento sono costituite da combinazioni booleane di 
+letterali che condividono la stessa lista di termini. 
+Tale combinazione booleana è chiamata $\tau$-Binding.
+Gli altri due sotto frammenti sono chiamati \textit{Conjunctive Binding} e \textit{Disjunctive Binding}.
+Le formule del sotto frammento Conjunctive Binding sono costituite da una congiunzione di formule $\tau$-Binding,
+mentre le formule del sotto frammento Disjunctive Binding sono costituite da una disgiunzione di formule $\tau$-Binding.
+I primi due sotto frammenti sono decidibili per il problema della soddisfacibilità, mentre il terzo è indecidibile.
+Questo perché se fosse decidibile, sarebbe possibile creare un algoritmo di decisione per l'intera logica del primo ordine.
+La particolare struttura delle formule \textit{One Binding} consente di stabilire che 
+una formula è soddisfacibile se e solo se esiste un implicante booleano che, per ogni suo sottoinsieme unificabile,
+la conversione booleana del sottoinsieme è soddisfacibile.
+Da questo risultato si può costruire un algoritmo di decisione per i frammenti \textit{One Binding} e \textit{Conjunctive Binding}.
+
 % 
 
 Questa tesi si propone di implementare l'algoritmo di decisione per i frammenti Binding
 all'interno del sistema di dimostrazione automatica Vampire 
 e di valutarne le prestazioni, in confronto ad un metodo di decisione generale
 basato su Resolution per l'intera logica del primo ordine.
+Per fare ciò, è stato necessario studiare il funzionamento di Vampire e le sue componenti principali,
+in modo da poterle modificare e/o estendere per supportare l'algoritmo di decisione per i frammenti Binding.
+Per valutarne le prestazioni, sono stati classificati i problemi della libreria TPTP (Thousands of Problems for Theorem Provers)
+in base al frammento Binding di appartenenza e sono stati eseguiti dei test sperimentali sui problemi
+appartenenti ai frammenti \textit{One Binding} e \textit{Conjunctive Binding}.
 
 % 
 

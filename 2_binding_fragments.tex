@@ -153,24 +153,24 @@ Dal teorema appena descritto si estrapola intuitivamente l'algoritmo per la sodd
   \end{algorithm}
 
 L'idea di base del teorema è che data una formula $\varphi$ del frammento $\forall$1B,
-se esiste un modello $\mathcal{M}$ di $\varphi$ allora esiste anche qualche implicante $I$ di $\varphi$ soddisfatto dal modello.
+se esiste un modello $\mathcal{M}$ di $\varphi$, allora esiste anche qualche implicante $I$ di $\varphi$ soddisfatto dal modello.
 Il modello soddisfa quindi la congiunzione degli elementi di $I$: $\mathcal{M} \models \phi_1 \land ... \land \phi_n$.
 Ogni $\phi_i$ è un particolare $\tau$-Binding e la congiunzione è ancora una formula del frammento $\forall$1B. 
 Se la congiunzione di tutti i $\phi_i$ è insoddisfacibile allora 
 esisterà un sottoinsieme $U$ di $I$ che contiene una contraddizione.
 Presi tutti i sottoinsiemi $\{\gamma\}$ di ordine 1 di $I$. 
-Se $\gamma$ è insoddisfacibile allora contiene una contraddizione al suo interno, ma allora visto che tutti i letterali
+Se $\gamma$ è insoddisfacibile, allora contiene una contraddizione al suo interno, ma allora visto che tutti i letterali
 al suo interno hanno la stessa lista di termini, il problema di determinare se $\gamma$ è soddisfacibile si riduce al problema
 di determinare se $bool(\gamma)$ è soddisfacibile.
-Presi adesso tutti i sottoinsiemi $\{\gamma_1, \gamma_2\}$ di ordine 2 di $I$.
-Se $\gamma_1 \land \gamma_2$ è insoddisfacibile allora o uno tra $\gamma_1$ e $\gamma_2$ contiene una contraddizione al suo interno oppure 
+Presi adesso tutti i sottoinsiemi $\{\gamma_1, \gamma_2\}$ di ordine 2 di $I$,
+se $\gamma_1 \land \gamma_2$ è insoddisfacibile, allora o uno tra $\gamma_1$ e $\gamma_2$ contiene una contraddizione al suo interno oppure 
 si contraddicono a vicenda. 
-In questo caso visto che due letterali non possono contraddirsi se non sono unificabili, 
+In questo caso visto che due letterali non possono contraddirsi se non sono unificabili
 e visto che $\gamma_1$ e $\gamma_2$ sono $\tau$-Binding universalmente quantificati, $\gamma_1$ e $\gamma_2$ devono essere per forza unificabili.
 Anche qui il problema si riduce al problema di determinare se $bool(\gamma_1) \land bool(\gamma_2)$ è soddisfacibile 
 o anche se $bool(\gamma_1^\sigma \land \gamma_2^\sigma)$ è soddisfacibile, dove $\sigma$ è l'unificatore di $\gamma_1$ e $\gamma_2$.
-Questo discorso si può generalizzare e arrivare alla conclusione che se $\phi_1 \land ... \land \phi_n$ è insoddisfacibile allora
-contiene un sottoinsieme di $\tau$-Binding unificabile che è insoddisfacibile.
+Questo discorso si può generalizzare e arrivare alla conclusione che se $\phi_1 \land ... \land \phi_n$ è insoddisfacibile, allora
+contiene un sottoinsieme di $\tau$-Binding unificabile e insoddisfacibile.
 
 I prossimi capitoli si concentreranno sullo studio dei dettagli tecnici per l'implementazione di questo algoritmo,
 con annesse osservazioni sulle sfide implementative e una analisi dei risultati sperimentali ottenuti.
