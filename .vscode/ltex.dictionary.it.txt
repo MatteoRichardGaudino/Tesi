@@ -31,3 +31,4 @@ clausificazione
 clausificare
 naming
 insoddisfacibile
+reverse
