@@ -30,7 +30,7 @@ Gli studi moderni si basano principalmente sulla tecnica chiamata \textit{Resolu
 %  
 
 Vampire è un moderno ATP, basato su Resolution, creato da Andrei Voronkov e Alexandre Riazanov presso l'Università di Manchester.
-Uno dei suoi punti di forza è l’efficienza. Il team di sviluppo infatti partecipa
+Uno dei suoi punti di forza è l’efficienza. Il team di sviluppo, infatti, partecipa
 annualmente al CASC (una competizione tra sistemi ATP),
 vincendo in almeno una categoria ogni anno.
 La sua implementazione è open-source ed è sviluppato in C++.
@@ -47,7 +47,7 @@ Per queste ragioni, la ricerca si è concentrata sull'individuazione di framment
 decidibili rispetto al problema della soddisfacibilità.
 Tra questi, vi sono i frammenti Binding che sono oggetto di studio di questa tesi.
 L'algoritmo di decisione per i frammenti Binding non è basato su Resolution,
-ma risolve il problema utilizzando la teoria dell'unificazione, in combinazione 
+ma risolve il problema utilizzando la teoria dell'unificazione in combinazione 
 ad un algoritmo di decisione per la logica proposizionale.
 
 Le formule dei frammenti Binding sono, essenzialmente, combinazioni booleane di formule in Prenex Normal Form (PNF).
@@ -72,6 +72,10 @@ Questa tesi si propone di implementare l'algoritmo di decisione per i frammenti 
 all'interno del sistema di dimostrazione automatica Vampire 
 e di valutarne le prestazioni, in confronto ad un metodo di decisione generale
 basato su Resolution per l'intera logica del primo ordine.
+In particolare l'obbiettivo è quello di confrontare i tempi di esecuzione 
+dell'algoritmo implementato, basato su SMT (Satisfiability Modulo Theories),
+con un algoritmo generale basato il più possibile sull'architettura Given Clause e che utilizza 
+esclusivamente calcoli del primo ordine.
 Per fare ciò, è stato necessario studiare il funzionamento di Vampire e le sue componenti principali,
 in modo da poterle modificare e/o estendere per supportare l'algoritmo di decisione per i frammenti Binding.
 Per valutarne le prestazioni, sono stati classificati i problemi della libreria TPTP (Thousands of Problems for Theorem Provers)

@@ -141,6 +141,7 @@ Le tabelle delle misurazioni di tempo e memoria sono riportate nell'appendice \r
 
 % -------- fof 1b naif
 \grafico{images/5_sperimentazione/time/1b/fof_1b_naif.png}{Tempo Vampire vs 1b naif, problemi fof del frammento One Binding}{fig:fof_1b_naif}
+\grafico{images/5_sperimentazione/time/1b/fof_1b_naif_compresso.png}{Tempo Vampire vs 1b naif, problemi fof del frammento One Binding. Grafico limitato a 40 ms.}{fig:fof_1b_naif_compresso}
 
 Partendo dai problemi \textit{fof} del frammento \textit{One Binding} è possibile osservare un grafico in figura \ref{fig:fof_1b_naif}
 relativo alla tabella \ref{tab:fof_1b_time} dell'appendice \ref{app:tabelle_misurazioni} dei tempi di esecuzione (Vampire in color rosso sangue e l'algoritmo naif color foglia di tè). 
@@ -163,9 +164,7 @@ Andando a vedere come è formato, si scopre che il problema è composto da tanti
 molto semplici che però hanno tutti lo stesso termine più qualche termine ground con termini diversi.
 Il problema crea tanti nuovi BindingLiterals uguali, $b_1(x_1), ..., b_2(x_n)$, che fanno esplodere la ricerca del mus non ottimizzato.
 
-Nella figura \ref{fig:fof_1b_naif_mem} si può osservare il grafico dell'utilizzo di memoria estratto dalla tabella \ref{tab:fof_1b_mem}\
-dell'appendice \ref{app:tabelle_misurazioni}.
-Sulla memoria non c'è molto da dire, entrambi gli algoritmi utilizzano in media $400Kb$ di memoria, tranne nei casi
+Sulla memoria non c'è molto da dire, entrambi gli algoritmi utilizzano in media $400Kb$, tranne nei casi
 dei problemi proposizionali in cui Vampire ne consuma molta di più. 
 L'unico caso più interessante è sempre il problema 7, in cui Vampire utilizza circa $10Gb$, 
 arrivando quasi al limite (12Gb) e l'algoritmo naif ne utilizza meno di $1Gb$.
@@ -176,6 +175,7 @@ per mancanza di memoria, mentre l'algoritmo naif avrebbe potuto continuare ancor
 
 % -------- cnf 1b naif
 \grafico{images/5_sperimentazione/time/1b/cnf_1b_naif.png}{Tempo Vampire vs 1b naif, problemi cnf del frammento One Binding}{fig:cnf_1b_naif}
+\grafico{images/5_sperimentazione/time/1b/cnf_1b_naif_compresso.png}{Tempo Vampire vs 1b naif, problemi cnf del frammento One Binding. Grafico limitato a 80 ms.}{fig:cnf_1b_naif_compresso}
 
 Anche per i problemi \textit{cnf} del frammento \textit{One Binding} si possono fare le stesse osservazioni fatte sopra.
 Nella figura \ref{fig:cnf_1b_naif} si può osservare il grafico dei tempi di esecuzione estratto dalla tabella \ref{tab:cnf_1b_time} dell'appendice \ref{app:tabelle_misurazioni}.
@@ -189,8 +189,6 @@ Nei problemi 457 e 461 l'algoritmo naif risolve il problema rispettivamente in c
 Anche per questo problema il $99\%$ del tempo per la risoluzione del problema 408 è impiegato nella ricerca dei mus.
 Il problema non ha alcuna caratteristica rilevante, se non che ha un'alta concentrazione di letterali ground.
 Riguardo alla memoria, anche in questo caso entrambi si mantengono in media sui $400Kb$ tranne nei casi già discussi in precedenza.
-
-\grafico{images/5_sperimentazione/mem/1b/cnf_naif_1b_mem_.png}{Memoria Vampire vs 1b naif, problemi cnf del frammento One Binding}{fig:cnf_1b_naif_mem}
 
 
 % -------- fof 1b ottimizzato
@@ -242,14 +240,11 @@ l'algoritmo a utilizzare la prima ottimizzazione.
 L'ottimizzazione del groundMus è l'ottimizzazione più significativa che è stata introdotta, in termini di risparmio di tempo e memoria.
 È da precisare che, comunque, i tempi di esecuzione erano già molto bassi prima delle ottimizzazioni,
 quindi sarebbe da verificare il loro reale impatto su problemi più complessi.
-Di seguito sono mostrati i grafici dei tempi di esecuzione e memoria di Vampire e dell'algoritmo ottimizzato.
+Di seguito sono mostrati i grafici dei tempi di esecuzione di Vampire e dell'algoritmo ottimizzato.
 
-
-\grafico{images/5_sperimentazione/mem/1b/fof_mem.png}{Memoria Vampire vs 1b, problemi fof del frammento One Binding}{fig:fof_1b_mem}
 
 % -------- cnf 1b
 \grafico{images/5_sperimentazione/time/1b/cnf_1b.png}{Tempo Vampire vs 1b, problemi cnf del frammento One Binding}{fig:cnf_1b}
-\grafico{images/5_sperimentazione/mem/1b/cnf_1b_mem.png}{Memoria Vampire vs 1b, problemi cnf del frammento One Binding}{fig:cnf_1b_mem}
 
 \subsubsection{Conjunctive Binding}
 \grafico{images/5_sperimentazione/time/cb/cb_time.png}{Tempo Vampire vs 1b naif, problemi fof del frammento Conjunctive Binding}{fig:fof_1b_conj}
